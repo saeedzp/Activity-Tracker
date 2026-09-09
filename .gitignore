@@ -14,3 +14,4 @@ seed/stores.csv
 .vercel/
 .open-next/
 .wrangler/
+public/version.json

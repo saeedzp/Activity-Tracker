@@ -37,11 +37,21 @@ export async function POST(request: Request) {
   if (!(STATUSES as readonly string[]).includes(status)) {
     return NextResponse.json({ error: "حالة غير معروفة" }, { status: 400 });
   }
-  if (requiresReasonCode(status) && !reasonCodesFor(status).includes(reasonCode ?? "")) {
+  if (reasonCode && !reasonCodesFor(status).includes(reasonCode)) {
     return NextResponse.json({ error: "كود السبب غير صحيح لهذه الحالة" }, { status: 400 });
+  }
+  // Not Implemented is the one status that always owes an explanation.
+  if (status === "Not Implemented" && !reasonCode) {
+    return NextResponse.json({ error: "اختر السبب" }, { status: 400 });
   }
   if (requiresAltStoreName(status) && !altStoreName) {
     return NextResponse.json({ error: "اكتب اسم السوق الفعلي" }, { status: 400 });
+  }
+  // "Other" names no cause on its own, so the explanation is what makes the row
+  // worth anything to whoever reads the export.
+  const note = body?.note ? String(body.note).trim() : null;
+  if (reasonCode === "Other" && !note) {
+    return NextResponse.json({ error: "اكتب السبب" }, { status: 400 });
   }
 
   const db = serviceClient();
@@ -58,9 +68,9 @@ export async function POST(request: Request) {
       implementation_date: body?.implementation_date || null,
       status,
       // The status decides whether a reason code belongs here at all.
-      reason_code: requiresReasonCode(status) ? reasonCode : null,
+      reason_code: status === "Implemented in another store" ? null : reasonCode,
       alt_store_name: requiresAltStoreName(status) ? altStoreName : null,
-      note: body?.note ? String(body.note).trim() : null,
+      note,
       // submitted_at is left to the database default: the phone clock is not trusted.
     })
     .select("id, submitted_at")

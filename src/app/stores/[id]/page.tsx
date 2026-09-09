@@ -4,7 +4,7 @@ import { missingEnv } from "@/lib/config";
 import { serviceClient } from "@/lib/supabase";
 import { SetupNeeded } from "@/components/SetupNeeded";
 import { AppBar } from "@/components/AppBar";
-import { EntryForm } from "@/components/EntryForm";
+import { EntryForm, type Brand } from "@/components/EntryForm";
 
 // Cloudflare Pages runs every route on the edge runtime.
 export const runtime = "edge";
@@ -23,11 +23,17 @@ export default async function StoreEntryPage({
 
   const { id } = await params;
   const db = serviceClient();
-  const { data } = await db
-    .from("stores")
-    .select("id, name, account, city, me_id, tl_id")
-    .eq("id", id)
-    .maybeSingle();
+  const [storeResult, brandResult] = await Promise.all([
+    db.from("stores").select("id, name, account, city, me_id, tl_id").eq("id", id).maybeSingle(),
+    db
+      .from("brands")
+      .select("id, name, image_url, color")
+      .eq("active", true)
+      .order("sort_order")
+      .order("name"),
+  ]);
+  const { data } = storeResult;
+  const brands = (brandResult.data ?? []) as unknown as Brand[];
 
   // Scoped to the signed-in employee, so a guessed store id reveals nothing.
   const store = data as { id: string; name: string; me_id: string; tl_id: string } | null;
@@ -40,7 +46,7 @@ export default async function StoreEntryPage({
     <>
       <AppBar name={session.name} />
       <main className="mx-auto max-w-[560px] p-4">
-        <EntryForm storeId={store.id} storeName={store.name} />
+        <EntryForm storeId={store.id} storeName={store.name} brands={brands} />
       </main>
     </>
   );

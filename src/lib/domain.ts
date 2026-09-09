@@ -51,6 +51,14 @@ export function reasonCodesFor(status: Status): readonly string[] {
   return REASON_CODES_BY_STATUS[status];
 }
 
+/**
+ * A reason code qualifies an implementation that happened anyway (low stock, no
+ * POSM), so it is optional there; Not Implemented always owes one.
+ */
+export function reasonCodeRequired(status: Status): boolean {
+  return status === "Not Implemented";
+}
+
 /** `Implemented in another store` carries no reason code, but needs the real store name. */
 export function requiresAltStoreName(status: Status): boolean {
   return status === "Implemented in another store";
@@ -72,6 +80,26 @@ export const DISPLAY_TYPES = [
   "Rebrandable",
 ] as const;
 export type DisplayType = (typeof DISPLAY_TYPES)[number];
+
+/**
+ * Arabic names for the display types. Storage and export stay English; these
+ * are the words merchandisers use on the floor, so the screen uses them.
+ */
+export const DISPLAY_TYPE_AR: Record<DisplayType, string> = {
+  "50X50": "50×50",
+  "1x1": "1×1",
+  "2x1": "2×1",
+  "2x2": "2×2",
+  "3x2": "3×2",
+  "6x2": "6×2",
+  GE: "القندولة",
+  GMU: "GMU",
+  Rebrandable: "استاند حديد قابل لتغيير المواد الدعائية",
+};
+
+export function displayTypeAr(type: string): string {
+  return DISPLAY_TYPE_AR[type as DisplayType] ?? type;
+}
 
 export const MATCH_METHODS = ["exact", "fuzzy", "manual", "unlinked"] as const;
 export type MatchMethod = (typeof MATCH_METHODS)[number];

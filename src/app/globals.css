@@ -2,15 +2,33 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Palette carried over from the prototype. */
 :root {
-  --font-app: "Segoe UI", "Tahoma", system-ui, sans-serif;
+  --paper: #f7f5f0;
+  --card: #ffffff;
+  --ink: #17150f;
+  --mute: #6e685c;
+  --line: #e2ddd1;
+  --amber: #b57a0e;
+  --amber-soft: #f5ead2;
+  --ok: #2c6a4e;
+  --ok-soft: #e3f0e8;
+  --warn: #9e3b2c;
+  --warn-soft: #f7e6e2;
 }
 
-html {
-  -webkit-text-size-adjust: 100%;
+* {
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  background: #f8fafc;
-  color: #0f172a;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Noto Kufi Arabic", "Segoe UI", Tahoma, system-ui, sans-serif;
+  line-height: 1.6;
+}
+
+/* The grid needs tighter lines than the mobile screens. */
+.grid-shell {
+  line-height: 1.35;
 }

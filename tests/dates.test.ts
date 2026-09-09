@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDateAr, formatPeriodAr, MONTHS_AR } from "@/lib/dates";
+import { formatDateAr, formatMonthAr, MONTHS_AR } from "@/lib/dates";
 
 describe("formatDateAr", () => {
   it("names the month the way it is said in Saudi usage", () => {
@@ -23,13 +23,13 @@ describe("formatDateAr", () => {
   });
 });
 
-describe("formatPeriodAr", () => {
-  it("names the month of a period", () => {
-    expect(formatPeriodAr("2026-09")).toBe("سبتمبر 2026");
+describe("formatMonthAr", () => {
+  it("names the month", () => {
+    expect(formatMonthAr("2026-09")).toBe("سبتمبر 2026");
   });
 
-  it("passes through a malformed period", () => {
-    expect(formatPeriodAr("2026")).toBe("2026");
+  it("passes through a malformed month", () => {
+    expect(formatMonthAr("2026")).toBe("2026");
   });
 });
 

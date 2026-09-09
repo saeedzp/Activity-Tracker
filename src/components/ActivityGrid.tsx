@@ -17,7 +17,7 @@ import { BRANDS, DISPLAY_TYPES } from "@/lib/domain";
 import { StorePicker, type StoreOption } from "./StorePicker";
 
 interface Props {
-  period: string;
+  month: string;
   initialRows: ActivityDraft[];
   stores: StoreOption[];
 }
@@ -27,9 +27,9 @@ type SaveState = "idle" | "saving" | "saved" | "error";
 let rowCounter = 0;
 const newKey = () => `new:${++rowCounter}`;
 
-export function ActivityGrid({ period, initialRows, stores }: Props) {
+export function ActivityGrid({ month, initialRows, stores }: Props) {
   const [rows, setRows] = useState<ActivityDraft[]>(() =>
-    initialRows.length > 0 ? initialRows : [emptyDraft(period, newKey())],
+    initialRows.length > 0 ? initialRows : [emptyDraft(month, newKey())],
   );
   const [saved, setSaved] = useState(
     () => new Map(initialRows.map((r) => [r.key, { ...r }])),
@@ -63,8 +63,8 @@ export function ActivityGrid({ period, initialRows, stores }: Props) {
   }, []);
 
   const addRow = useCallback(() => {
-    setRows((prev) => [...prev, emptyDraft(period, newKey())]);
-  }, [period]);
+    setRows((prev) => [...prev, emptyDraft(month, newKey())]);
+  }, [month]);
 
   const duplicateRow = useCallback((key: string) => {
     setRows((prev) => {
@@ -81,10 +81,10 @@ export function ActivityGrid({ period, initialRows, stores }: Props) {
       // Saved rows must be deleted server-side too, not just dropped locally.
       const ids = prev.filter((r) => keys.has(r.key) && r.id).map((r) => r.id!);
       if (ids.length) setDeleted((d) => [...d, ...ids]);
-      return kept.length > 0 ? kept : [emptyDraft(period, newKey())];
+      return kept.length > 0 ? kept : [emptyDraft(month, newKey())];
     });
     setSelected(new Set());
-  }, [period]);
+  }, [month]);
 
   /** Apply one value to every selected row — the bulk-fill action. */
   const fillSelected = useCallback(
@@ -117,7 +117,7 @@ export function ActivityGrid({ period, initialRows, stores }: Props) {
       setRows((prev) => {
         const next = [...prev];
         while (next.length < startRow + block.length) {
-          next.push(emptyDraft(period, newKey()));
+          next.push(emptyDraft(month, newKey()));
         }
         block.forEach((cells, r) => {
           const target = { ...next[startRow + r] };
@@ -135,7 +135,7 @@ export function ActivityGrid({ period, initialRows, stores }: Props) {
       });
       setMessage(`تم لصق ${block.length} صف`);
     },
-    [active, rows, period],
+    [active, rows, month],
   );
 
   /* ----------------------------------------------------------------- save */
@@ -147,7 +147,7 @@ export function ActivityGrid({ period, initialRows, stores }: Props) {
       const res = await fetch("/api/activities", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ period, rows: pending, deleted }),
+        body: JSON.stringify({ month, rows: pending, deleted }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -168,7 +168,7 @@ export function ActivityGrid({ period, initialRows, stores }: Props) {
       setState("error");
       setMessage("تعذّر الاتصال");
     }
-  }, [pending, deleted, period]);
+  }, [pending, deleted, month]);
 
   // Autosave a moment after typing stops, so there is no save button to forget.
   useEffect(() => {

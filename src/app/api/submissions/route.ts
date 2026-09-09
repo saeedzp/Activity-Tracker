@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { serviceClient } from "@/lib/supabase";
 import { currentSession } from "@/lib/session";
+import { linkToPlan, monthOf, previousMonth, type PlannedActivity } from "@/lib/plan-link";
 import {
   asksCustomPosm,
   STATUSES,
@@ -56,12 +57,32 @@ export async function POST(request: Request) {
   }
 
   const db = serviceClient();
+
+  // Only this month's and last month's plans can match, so the lookup stays
+  // small however many months of history accumulate.
+  const thisMonth = monthOf(new Date());
+  const { data: plans } = await db
+    .from("activities")
+    .select("id, month, planned_store_id, brand, display_type")
+    .in("month", [thisMonth, previousMonth(thisMonth)])
+    .eq("planned_store_id", storeId)
+    .eq("brand", brand)
+    .eq("display_type", displayType);
+
+  const link = linkToPlan(
+    { storeId, brand, displayType },
+    (plans ?? []) as unknown as PlannedActivity[],
+  );
+
   const { data, error } = await db
     .from("submissions")
     .insert({
       store_id: storeId,
       emp_id: session.empId,
-      activity_id: body?.activity_id ?? null,
+      // Found rather than demanded: the employee records freely, and the line
+      // is attached to the plan when one answers to it.
+      activity_id: link.activity_id,
+      month: link.month,
       brand,
       display_type: displayType,
       entered: typeof body?.entered === "boolean" ? body.entered : null,
@@ -91,5 +112,7 @@ export async function POST(request: Request) {
   return NextResponse.json({
     id: data.id,
     closed: isClosing(status),
+    month: link.month,
+    offPlan: link.offPlan,
   });
 }

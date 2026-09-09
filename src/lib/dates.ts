@@ -23,14 +23,14 @@ export function formatDateAr(iso: string | null | undefined): string {
   return `${Number(day)} ${name} ${year}`;
 }
 
-/** "2026-09" -> "سبتمبر 2026", for the period picker. */
-export function formatPeriodAr(period: string | null | undefined): string {
-  if (!period) return "—";
-  const match = /^(\d{4})-(\d{2})$/.exec(period.trim());
-  if (!match) return period;
+/** "2026-09" -> "سبتمبر 2026", for the month picker. */
+export function formatMonthAr(value: string | null | undefined): string {
+  if (!value) return "—";
+  const match = /^(\d{4})-(\d{2})$/.exec(value.trim());
+  if (!match) return value;
   const [, year, month] = match;
   const name = MONTHS_AR[Number(month) - 1];
-  return name ? `${name} ${year}` : period;
+  return name ? `${name} ${year}` : value;
 }
 
 export function todayIso(): string {

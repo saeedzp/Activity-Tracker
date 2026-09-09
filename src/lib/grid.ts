@@ -17,7 +17,7 @@ export interface ActivityDraft {
   /** Client-side row key. Server ids are uuids; new rows carry a `new:` key. */
   key: string;
   id?: string;
-  period: string;
+  month: string;
   brand: string;
   display_type: string;
   promo_desc: string;
@@ -48,10 +48,10 @@ export type GridColumnKey = (typeof GRID_COLUMNS)[number]["key"];
 
 export const EDITABLE_KEYS = GRID_COLUMNS.map((c) => c.key);
 
-export function emptyDraft(period: string, key: string): ActivityDraft {
+export function emptyDraft(month: string, key: string): ActivityDraft {
   return {
     key,
-    period,
+    month,
     brand: "",
     display_type: "",
     promo_desc: "",
@@ -240,13 +240,13 @@ export function changedRows(
   });
 }
 
-/** Duplicate lines: the same store, brand and display type inside one period. */
+/** Duplicate lines: the same store, brand and display type inside one month. */
 export function duplicateKeys(rows: ActivityDraft[]): Set<string> {
   const seen = new Map<string, string>();
   const dupes = new Set<string>();
   for (const row of rows) {
     if (!row.planned_store_id || !row.brand || !row.display_type) continue;
-    const id = `${row.period}|${row.planned_store_id}|${row.brand}|${row.display_type}`;
+    const id = `${row.month}|${row.planned_store_id}|${row.brand}|${row.display_type}`;
     const first = seen.get(id);
     if (first) {
       dupes.add(first);

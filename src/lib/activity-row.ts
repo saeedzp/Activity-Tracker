@@ -11,12 +11,12 @@ import type { ActivityDraft } from "./grid";
 import type { MatchMethod } from "./domain";
 
 export const ACTIVITY_GRID_SELECT =
-  "id, period, brand, display_type, promo_desc, effective_from, effective_to," +
+  "id, month, brand, display_type, promo_desc, effective_from, effective_to," +
   " planned_store_id, account, mars_store_no, mars_store_name, match_method, match_score";
 
 export interface ActivityRow {
   id: string;
-  period: string | null;
+  month: string | null;
   brand: string | null;
   display_type: string | null;
   promo_desc: string | null;
@@ -32,12 +32,12 @@ export interface ActivityRow {
 
 const MATCH_METHODS = new Set(["exact", "fuzzy", "manual", "unlinked"]);
 
-export function toDraft(row: ActivityRow, fallbackPeriod: string): ActivityDraft {
+export function toDraft(row: ActivityRow, fallbackMonth: string): ActivityDraft {
   const method = row.match_method ?? "";
   return {
     key: row.id,
     id: row.id,
-    period: row.period ?? fallbackPeriod,
+    month: row.month ?? fallbackMonth,
     brand: row.brand ?? "",
     display_type: row.display_type ?? "",
     promo_desc: row.promo_desc ?? "",

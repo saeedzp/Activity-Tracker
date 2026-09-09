@@ -15,14 +15,14 @@ export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
 /** Default to the current month, which is what the operator is planning. */
-function currentPeriod(): string {
+function currentMonth(): string {
   return new Date().toISOString().slice(0, 7);
 }
 
 export default async function ActivitiesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ period?: string }>;
+  searchParams: Promise<{ month?: string }>;
 }) {
   // Checked before the session, which needs SESSION_SECRET to even be read.
   const missing = missingEnv();
@@ -31,8 +31,8 @@ export default async function ActivitiesPage({
   const session = await currentSession();
   if (!session) redirect("/");
 
-  const { period: requested } = await searchParams;
-  const period = requested?.trim() || currentPeriod();
+  const { month: requested } = await searchParams;
+  const month = requested?.trim() || currentMonth();
 
   let rows: ActivityDraft[] = [];
   let stores: StoreOption[] = [];
@@ -44,7 +44,7 @@ export default async function ActivitiesPage({
       db
         .from("activities")
         .select(ACTIVITY_GRID_SELECT)
-        .eq("period", period)
+        .eq("month", month)
         .order("created_at"),
       db.from("stores").select("id, name, account, city").order("name"),
     ]);
@@ -52,7 +52,7 @@ export default async function ActivitiesPage({
     if (activities.error) throw new Error(activities.error.message);
     stores = (storeRows.data ?? []) as StoreOption[];
     rows = ((activities.data ?? []) as unknown as ActivityRow[]).map((a) =>
-      toDraft(a, period),
+      toDraft(a, month),
     );
   } catch (error) {
     loadError = error instanceof Error ? error.message : "تعذّر تحميل البيانات";
@@ -64,14 +64,14 @@ export default async function ActivitiesPage({
       <header className="mb-4 flex flex-wrap items-baseline gap-3">
         <h1 className="text-xl font-bold">جدول الاكتفيتي</h1>
         <form className="flex items-center gap-2 text-sm">
-          <label htmlFor="period" className="text-[var(--mute)]">
+          <label htmlFor="month" className="text-[var(--mute)]">
             الفترة
           </label>
           <input
-            id="period"
-            name="period"
+            id="month"
+            name="month"
             type="month"
-            defaultValue={period}
+            defaultValue={month}
             className="rounded-lg border border-[var(--line)] bg-white px-2 py-1"
           />
           <button type="submit" className="rounded-lg border border-[var(--line)] bg-white px-3 py-1 font-bold">
@@ -86,7 +86,7 @@ export default async function ActivitiesPage({
           <span className="mt-1 block font-mono text-xs">{loadError}</span>
         </div>
       ) : (
-        <ActivityGrid period={period} initialRows={rows} stores={stores} />
+        <ActivityGrid month={month} initialRows={rows} stores={stores} />
       )}
     </main>
   );

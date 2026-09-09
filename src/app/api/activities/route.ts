@@ -8,21 +8,21 @@ import { matchStore, type StoreAlias, type StoreRecord } from "@/lib/match";
 export const runtime = "edge";
 
 const SELECT =
-  "id, period, brand, display_type, promo_desc, effective_from, effective_to," +
+  "id, month, brand, display_type, promo_desc, effective_from, effective_to," +
   " planned_store_id, account, region, city, mars_store_no, mars_store_name," +
   " match_method, match_score, status, reason_code, closed, created_at";
 
-/** Read one period's activity lines for the grid. */
+/** Read one month's activity lines for the grid. */
 export async function GET(request: Request) {
   const session = await currentSession();
   if (!session) return NextResponse.json({ error: "غير مصرّح" }, { status: 401 });
 
-  const period = new URL(request.url).searchParams.get("period")?.trim();
-  if (!period) return NextResponse.json({ error: "period مطلوب" }, { status: 400 });
+  const month = new URL(request.url).searchParams.get("month")?.trim();
+  if (!month) return NextResponse.json({ error: "month مطلوب" }, { status: 400 });
 
   const db = serviceClient();
   const [activities, stores] = await Promise.all([
-    db.from("activities").select(SELECT).eq("period", period).order("created_at"),
+    db.from("activities").select(SELECT).eq("month", month).order("created_at"),
     db.from("stores").select("id, name, account, city, region").order("name"),
   ]);
 
@@ -36,7 +36,7 @@ export async function GET(request: Request) {
 }
 
 interface SavePayload {
-  period?: string;
+  month?: string;
   rows?: ActivityDraft[];
   deleted?: string[];
 }
@@ -54,10 +54,10 @@ export async function POST(request: Request) {
   if (!session) return NextResponse.json({ error: "غير مصرّح" }, { status: 401 });
 
   const body = (await request.json().catch(() => null)) as SavePayload | null;
-  const period = body?.period?.trim();
+  const month = body?.month?.trim();
   const rows = body?.rows ?? [];
   const deleted = body?.deleted ?? [];
-  if (!period) return NextResponse.json({ error: "period مطلوب" }, { status: 400 });
+  if (!month) return NextResponse.json({ error: "month مطلوب" }, { status: 400 });
 
   const db = serviceClient();
 
@@ -112,7 +112,7 @@ export async function POST(request: Request) {
     const store = storeId ? byId.get(storeId) : undefined;
     toWrite.push({
       ...(row.id ? { id: row.id } : {}),
-      period,
+      month,
       brand: resolved.brand,
       display_type: resolved.display_type,
       promo_desc: resolved.promo_desc || null,

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { serviceClient } from "@/lib/supabase";
 import { currentSession } from "@/lib/session";
-import { linkToPlan, monthOf, previousMonth, type PlannedActivity } from "@/lib/plan-link";
+import { monthOf } from "@/lib/dates";
 import {
   asksCustomPosm,
   STATUSES,
@@ -19,7 +19,7 @@ export const runtime = "edge";
  * Record one submission.
  *
  * Append-only: a correction is a new row, never an edit of an old one. The
- * latest row per store/brand/display type is the current state.
+ * latest row per store, activity and size is the current state.
  */
 export async function POST(request: Request) {
   const session = await currentSession();
@@ -27,13 +27,13 @@ export async function POST(request: Request) {
 
   const body = await request.json().catch(() => null);
   const storeId = String(body?.store_id ?? "").trim();
-  const brand = String(body?.brand ?? "").trim();
+  const activityId = String(body?.activity_id ?? "").trim();
   const displayType = String(body?.display_type ?? "").trim();
   const status = String(body?.status ?? "").trim() as Status;
   const reasonCode = body?.reason_code ? String(body.reason_code).trim() : null;
   const altStoreName = body?.alt_store_name ? String(body.alt_store_name).trim() : null;
 
-  if (!storeId || !brand || !displayType) {
+  if (!storeId || !activityId || !displayType) {
     return NextResponse.json({ error: "بيانات ناقصة" }, { status: 400 });
   }
   if (!(STATUSES as readonly string[]).includes(status)) {
@@ -58,32 +58,36 @@ export async function POST(request: Request) {
 
   const db = serviceClient();
 
-  // Only this month's and last month's plans can match, so the lookup stays
-  // small however many months of history accumulate.
-  const thisMonth = monthOf(new Date());
-  const { data: plans } = await db
+  // The campaign is read rather than trusted from the client: its name, brands
+  // and month are copied onto the submission, so editing the campaign later
+  // never rewrites what was reported at the time.
+  const { data: activity } = await db
     .from("activities")
-    .select("id, month, planned_store_id, brand, display_type")
-    .in("month", [thisMonth, previousMonth(thisMonth)])
-    .eq("planned_store_id", storeId)
-    .eq("brand", brand)
-    .eq("display_type", displayType);
+    .select("id, month, name, brands")
+    .eq("id", activityId)
+    .maybeSingle();
 
-  const link = linkToPlan(
-    { storeId, brand, displayType },
-    (plans ?? []) as unknown as PlannedActivity[],
-  );
+  if (!activity) {
+    return NextResponse.json({ error: "الاكتفيتي غير موجود" }, { status: 400 });
+  }
+  const plan = activity as unknown as {
+    id: string;
+    month: string | null;
+    name: string | null;
+    brands: string[] | null;
+  };
 
   const { data, error } = await db
     .from("submissions")
     .insert({
       store_id: storeId,
       emp_id: session.empId,
-      // Found rather than demanded: the employee records freely, and the line
-      // is attached to the plan when one answers to it.
-      activity_id: link.activity_id,
-      month: link.month,
-      brand,
+      activity_id: plan.id,
+      // The campaign's own month, so a September stand recorded in October is
+      // still reported against September.
+      month: plan.month ?? monthOf(new Date()),
+      activity_name: plan.name,
+      brands: plan.brands ?? [],
       display_type: displayType,
       entered: typeof body?.entered === "boolean" ? body.entered : null,
       entry_date: body?.entry_date || null,
@@ -112,7 +116,6 @@ export async function POST(request: Request) {
   return NextResponse.json({
     id: data.id,
     closed: isClosing(status),
-    month: link.month,
-    offPlan: link.offPlan,
+    month: plan.month,
   });
 }

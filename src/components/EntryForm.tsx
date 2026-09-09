@@ -14,11 +14,10 @@ import { formatDateAr, todayIso } from "@/lib/dates";
 import { PhotoPicker } from "./PhotoPicker";
 import type { PreparedPhoto } from "@/lib/photo";
 
-export interface Brand {
+export interface ActivityOption {
   id: string;
   name: string;
-  image_url: string | null;
-  color: string;
+  brands: string[];
 }
 
 /**
@@ -38,15 +37,15 @@ type Step = "form" | "review" | "done";
 export function EntryForm({
   storeId,
   storeName,
-  brands,
+  activities,
 }: {
   storeId: string;
   storeName: string;
-  brands: Brand[];
+  activities: ActivityOption[];
 }) {
   const router = useRouter();
   const [step, setStep] = useState<Step>("form");
-  const [brand, setBrand] = useState("");
+  const [activityId, setActivityId] = useState("");
   const [displayType, setDisplayType] = useState("");
   const [answer, setAnswer] = useState<AnswerKey | "">("");
   const [reasonCode, setReasonCode] = useState("");
@@ -58,6 +57,7 @@ export function EntryForm({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
+  const activity = activities.find((a) => a.id === activityId);
   const status = (ANSWERS.find((a) => a.key === answer)?.status ?? "") as Status | "";
   const wentIn = answer === "yes";
   const didNot = answer === "no";
@@ -67,7 +67,7 @@ export function EntryForm({
   const needsPosmAnswer = wentIn && asksCustomPosm(displayType);
 
   const ready =
-    brand !== "" &&
+    activityId !== "" &&
     displayType !== "" &&
     answer !== "" &&
     (!wentIn || photos.length >= 1) &&
@@ -104,7 +104,7 @@ export function EntryForm({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           store_id: storeId,
-          brand,
+          activity_id: activityId,
           display_type: displayType,
           entered: wentIn,
           entry_date: wentIn ? entryDate || null : null,
@@ -133,7 +133,7 @@ export function EntryForm({
   }
 
   function reset() {
-    setBrand("");
+    setActivityId("");
     setDisplayType("");
     setAnswer("");
     setReasonCode("");
@@ -153,7 +153,7 @@ export function EntryForm({
         </div>
         <h1 className="text-xl font-bold">تم الإرسال</h1>
         <p className="mt-2 text-sm text-[var(--mute)]">
-          {storeName} · {brand} · {displayTypeAr(displayType)}
+          {storeName} · {activity?.name} · {displayTypeAr(displayType)}
         </p>
         <button
           type="button"
@@ -184,8 +184,9 @@ export function EntryForm({
 
         <dl className="overflow-hidden rounded-xl border border-[var(--line)] bg-white">
           <Row label="السوق" value={storeName} />
-          <Row label="البراند" value={brand} />
-          <Row label="نوع الاكتفيتي" value={displayTypeAr(displayType)} />
+          <Row label="الاكتفيتي" value={activity?.name ?? "—"} />
+          <Row label="البراندات" value={activity?.brands.join(" · ") ?? "—"} />
+          <Row label="المقاس" value={displayTypeAr(displayType)} />
           <Row label="دخل الاستاند" value={ANSWERS.find((a) => a.key === answer)?.label ?? "—"} />
           {didNot && <Row label="السبب" value={reasonAr(reasonCode)} />}
           {needsOtherText && <Row label="تفاصيل السبب" value={otherReason.trim()} />}
@@ -244,29 +245,38 @@ export function EntryForm({
       </a>
       <h1 className="text-lg font-bold">{storeName}</h1>
 
-      <Label>البراند</Label>
-      <div className="grid grid-cols-3 gap-2">
-        {brands.map((b) => (
-          <button
-            key={b.id}
-            type="button"
-            onClick={() => setBrand(b.name)}
-            className={`overflow-hidden rounded-xl border text-center ${
-              brand === b.name ? "border-[var(--ink)] ring-2 ring-[var(--ink)]" : "border-[var(--line)]"
-            }`}
-          >
-            {b.image_url ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={b.image_url} alt="" className="aspect-square w-full bg-white object-contain p-1.5" />
-            ) : (
-              <span className="block aspect-square w-full" style={{ background: b.color }} />
-            )}
-            <span className="block bg-white px-1 py-1.5 text-xs font-bold">{b.name}</span>
-          </button>
-        ))}
-      </div>
+      <Label>الاكتفيتي</Label>
+      {activities.length === 0 ? (
+        <p className="rounded-xl border border-[var(--line)] bg-white p-4 text-sm text-[var(--mute)]">
+          ما فيه اكتفيتي مضاف لهذا الشهر بعد.
+        </p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {activities.map((a) => (
+            <button
+              key={a.id}
+              type="button"
+              onClick={() => setActivityId(a.id)}
+              className={`rounded-xl border p-3 text-right ${
+                activityId === a.id
+                  ? "border-[var(--ink)] bg-[var(--ink)] text-white"
+                  : "border-[var(--line)] bg-white"
+              }`}
+            >
+              <span className="block font-bold">{a.name}</span>
+              <span
+                className={`mt-0.5 block text-xs ${
+                  activityId === a.id ? "opacity-75" : "text-[var(--mute)]"
+                }`}
+              >
+                {a.brands.join(" · ")}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
 
-      <Label>نوع الاكتفيتي</Label>
+      <Label>المقاس</Label>
       <div className="flex flex-col gap-2">
         {DISPLAY_TYPES.map((t) => (
           <button

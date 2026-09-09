@@ -1,30 +1,21 @@
 import { redirect } from "next/navigation";
 import { currentSession } from "@/lib/session";
 import { missingEnv } from "@/lib/config";
+import { serviceClient } from "@/lib/supabase";
 import { SetupNeeded } from "@/components/SetupNeeded";
 import { AdminNav } from "@/components/AdminNav";
-import { serviceClient } from "@/lib/supabase";
-import { ActivityGrid } from "@/components/ActivityGrid";
-import type { ActivityDraft } from "@/lib/grid";
-import { ACTIVITY_GRID_SELECT, toDraft, type ActivityRow } from "@/lib/activity-row";
-import type { StoreOption } from "@/components/StorePicker";
+import { ActivityManager, type ActivityRow } from "@/components/ActivityManager";
+import { monthOf } from "@/lib/dates";
 
 // Cloudflare Pages runs every route on the edge runtime.
 export const runtime = "edge";
-
 export const dynamic = "force-dynamic";
-
-/** Default to the current month, which is what the operator is planning. */
-function currentMonth(): string {
-  return new Date().toISOString().slice(0, 7);
-}
 
 export default async function ActivitiesPage({
   searchParams,
 }: {
   searchParams: Promise<{ month?: string }>;
 }) {
-  // Checked before the session, which needs SESSION_SECRET to even be read.
   const missing = missingEnv();
   if (missing.length > 0) return <SetupNeeded missing={missing} />;
 
@@ -32,62 +23,45 @@ export default async function ActivitiesPage({
   if (!session) redirect("/");
 
   const { month: requested } = await searchParams;
-  const month = requested?.trim() || currentMonth();
+  const month = requested?.trim() || monthOf(new Date());
 
-  let rows: ActivityDraft[] = [];
-  let stores: StoreOption[] = [];
-  let loadError = "";
-
-  try {
-    const db = serviceClient();
-    const [activities, storeRows] = await Promise.all([
-      db
-        .from("activities")
-        .select(ACTIVITY_GRID_SELECT)
-        .eq("month", month)
-        .order("created_at"),
-      db.from("stores").select("id, name, account, city").order("name"),
-    ]);
-
-    if (activities.error) throw new Error(activities.error.message);
-    stores = (storeRows.data ?? []) as StoreOption[];
-    rows = ((activities.data ?? []) as unknown as ActivityRow[]).map((a) =>
-      toDraft(a, month),
-    );
-  } catch (error) {
-    loadError = error instanceof Error ? error.message : "تعذّر تحميل البيانات";
-  }
+  const db = serviceClient();
+  const { data } = await db
+    .from("activities")
+    .select("id, month, name, brands, active, sort_order")
+    .eq("month", month)
+    .order("sort_order")
+    .order("name");
 
   return (
-    <main className="mx-auto max-w-[1400px] p-4">
+    <main className="mx-auto max-w-[1100px] p-4">
       <AdminNav />
-      <header className="mb-4 flex flex-wrap items-baseline gap-3">
-        <h1 className="text-xl font-bold">جدول الاكتفيتي</h1>
-        <form className="flex items-center gap-2 text-sm">
+      <header className="mb-5 flex flex-wrap items-end gap-3">
+        <div>
+          <h1 className="text-xl font-bold">الاكتفيتي</h1>
+          <p className="text-sm text-[var(--mute)]">حملات الشهر والبراندات اللي تحملها.</p>
+        </div>
+        <form className="mr-auto flex items-center gap-2 text-sm">
           <label htmlFor="month" className="text-[var(--mute)]">
-            الفترة
+            الشهر
           </label>
           <input
             id="month"
             name="month"
             type="month"
             defaultValue={month}
-            className="rounded-lg border border-[var(--line)] bg-white px-2 py-1"
+            className="rounded-lg border border-[var(--line)] bg-white px-2 py-1.5"
           />
-          <button type="submit" className="rounded-lg border border-[var(--line)] bg-white px-3 py-1 font-bold">
+          <button
+            type="submit"
+            className="rounded-lg border border-[var(--line)] bg-white px-3 py-1.5 font-bold"
+          >
             عرض
           </button>
         </form>
       </header>
 
-      {loadError ? (
-        <div className="rounded-xl border border-[var(--warn)] bg-[var(--warn-soft)] p-4 text-sm text-[var(--warn)]">
-          <b className="block">تعذّر الاتصال بقاعدة البيانات</b>
-          <span className="mt-1 block font-mono text-xs">{loadError}</span>
-        </div>
-      ) : (
-        <ActivityGrid month={month} initialRows={rows} stores={stores} />
-      )}
+      <ActivityManager month={month} initial={(data ?? []) as unknown as ActivityRow[]} />
     </main>
   );
 }

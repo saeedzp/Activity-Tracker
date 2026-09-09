@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDateAr, formatMonthAr, MONTHS_AR } from "@/lib/dates";
+import { formatDateAr, formatMonthAr, monthOf, MONTHS_AR } from "@/lib/dates";
 
 describe("formatDateAr", () => {
   it("names the month the way it is said in Saudi usage", () => {
@@ -37,5 +37,16 @@ describe("MONTHS_AR", () => {
   it("covers all twelve months", () => {
     expect(MONTHS_AR).toHaveLength(12);
     expect(new Set(MONTHS_AR).size).toBe(12);
+  });
+});
+
+describe("monthOf", () => {
+  it("reads the month a date falls in", () => {
+    expect(monthOf(new Date("2026-09-09T22:00:00Z"))).toBe("2026-09");
+    expect(monthOf(new Date("2026-01-01T00:00:00Z"))).toBe("2026-01");
+  });
+
+  it("pads a single-digit month", () => {
+    expect(monthOf(new Date("2026-03-15T00:00:00Z"))).toBe("2026-03");
   });
 });

@@ -9,7 +9,8 @@ export interface HistoryRow {
   month: string | null;
   store_id: string;
   emp_id: string;
-  brand: string;
+  activity_name: string | null;
+  brands: string[];
   display_type: string;
   entered: boolean | null;
   entry_date: string | null;
@@ -33,7 +34,7 @@ export interface StoreName {
 
 /** Every column, in the order the report reads. */
 const COLUMNS = [
-  "الشهر", "السوق", "الأكاونت", "المدينة", "البراند", "نوع الاكتفيتي",
+  "الشهر", "السوق", "الأكاونت", "المدينة", "الاكتفيتي", "البراندات", "المقاس",
   "دخل الاستاند", "تاريخ الدخول", "الحالة", "السبب", "تفاصيل السبب",
   "السوق الفعلي", "مواد دعائية", "ضمن الخطة", "الموظف", "تاريخ الإرسال",
 ] as const;
@@ -60,7 +61,8 @@ export function HistoryTable({
       return (
         store?.name.toLowerCase().includes(q) ||
         r.store_id.toLowerCase().includes(q) ||
-        r.brand.toLowerCase().includes(q) ||
+        (r.activity_name ?? "").toLowerCase().includes(q) ||
+        r.brands.some((b) => b.toLowerCase().includes(q)) ||
         (store?.city ?? "").toLowerCase().includes(q)
       );
     });
@@ -74,7 +76,8 @@ export function HistoryTable({
       store?.name ?? row.store_id,
       store?.account ?? "",
       store?.city ?? "",
-      row.brand,
+      row.activity_name ?? "—",
+      row.brands.join(" · "),
       displayTypeAr(row.display_type),
       row.entered === null ? "—" : row.entered ? "نعم" : "لا",
       formatDateAr(row.entry_date ?? row.implementation_date),
@@ -137,7 +140,7 @@ export function HistoryTable({
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="ابحث بالسوق أو البراند أو المدينة"
+          placeholder="ابحث بالسوق أو الاكتفيتي أو البراند"
           className="min-w-[220px] flex-1 rounded-lg border border-[var(--line)] bg-white p-2 text-sm"
         />
         <button
@@ -178,9 +181,9 @@ export function HistoryTable({
                       <td
                         key={index}
                         className={`border-b border-[var(--line)] px-3 py-2 ${
-                          index === 13 && !row.activity_id
+                          index === 14 && !row.activity_id
                             ? "font-bold text-[var(--amber)]"
-                            : index === 8
+                            : index === 9
                               ? "whitespace-nowrap font-bold"
                               : "whitespace-nowrap"
                         }`}

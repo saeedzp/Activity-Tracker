@@ -33,6 +33,11 @@ export function formatMonthAr(value: string | null | undefined): string {
   return name ? `${name} ${year}` : value;
 }
 
+/** "2026-09" for a given date — the key every monthly view groups on. */
+export function monthOf(date: Date = new Date()): string {
+  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
 export function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }

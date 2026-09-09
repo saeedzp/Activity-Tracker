@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 /** The admin screens had no way between them but typing the URL. */
 const TABS = [
   { href: "/admin/activities", label: "الاكتفيتي" },
-  { href: "/admin/brands", label: "البراندات" },
   { href: "/admin/route", label: "الروت" },
   { href: "/admin/history", label: "السجل" },
   { href: "/stores", label: "أسواقك" },

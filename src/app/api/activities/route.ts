@@ -1,162 +1,83 @@
 import { NextResponse } from "next/server";
 import { serviceClient } from "@/lib/supabase";
 import { currentSession } from "@/lib/session";
-import { isRowEmpty, isRowValid, type ActivityDraft } from "@/lib/grid";
-import { matchStore, type StoreAlias, type StoreRecord } from "@/lib/match";
 
 // Cloudflare Pages runs every route on the edge runtime.
 export const runtime = "edge";
 
-const SELECT =
-  "id, month, brand, display_type, promo_desc, effective_from, effective_to," +
-  " planned_store_id, account, region, city, mars_store_no, mars_store_name," +
-  " match_method, match_score, status, reason_code, closed, created_at";
+const SELECT = "id, month, name, brands, active, sort_order";
 
-/** Read one month's activity lines for the grid. */
+/** The campaigns planned for one month. */
 export async function GET(request: Request) {
   const session = await currentSession();
   if (!session) return NextResponse.json({ error: "غير مصرّح" }, { status: 401 });
 
   const month = new URL(request.url).searchParams.get("month")?.trim();
-  if (!month) return NextResponse.json({ error: "month مطلوب" }, { status: 400 });
+  if (!month) return NextResponse.json({ error: "اختر الشهر" }, { status: 400 });
 
   const db = serviceClient();
-  const [activities, stores] = await Promise.all([
-    db.from("activities").select(SELECT).eq("month", month).order("created_at"),
-    db.from("stores").select("id, name, account, city, region").order("name"),
-  ]);
+  const { data, error } = await db
+    .from("activities")
+    .select(SELECT)
+    .eq("month", month)
+    .order("sort_order")
+    .order("name");
 
-  if (activities.error) {
-    return NextResponse.json({ error: activities.error.message }, { status: 500 });
-  }
-  return NextResponse.json({
-    activities: activities.data ?? [],
-    stores: stores.data ?? [],
-  });
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ activities: data ?? [] });
 }
 
-interface SavePayload {
-  month?: string;
-  rows?: ActivityDraft[];
-  deleted?: string[];
-}
-
-/**
- * Save the grid.
- *
- * Rows arrive as the operator left them: some new, some edited, some blank.
- * Blank rows are skipped, incomplete rows are reported back rather than
- * written, and a row with no store still gets run through the match engine so
- * the grid can show what it would link to.
- */
+/** Add a campaign, or edit one by id. */
 export async function POST(request: Request) {
   const session = await currentSession();
   if (!session) return NextResponse.json({ error: "غير مصرّح" }, { status: 401 });
 
-  const body = (await request.json().catch(() => null)) as SavePayload | null;
-  const month = body?.month?.trim();
-  const rows = body?.rows ?? [];
-  const deleted = body?.deleted ?? [];
-  if (!month) return NextResponse.json({ error: "month مطلوب" }, { status: 400 });
+  const body = await request.json().catch(() => null);
+  const month = String(body?.month ?? "").trim();
+  const name = String(body?.name ?? "").trim();
+
+  if (!/^\d{4}-\d{2}$/.test(month)) {
+    return NextResponse.json({ error: "اختر الشهر" }, { status: 400 });
+  }
+  if (!name) return NextResponse.json({ error: "اكتب اسم الاكتفيتي" }, { status: 400 });
+
+  // One campaign can carry several brands, and duplicates in the list are just
+  // noise from typing.
+  const brands = Array.isArray(body?.brands)
+    ? [...new Set(body.brands.map((b: unknown) => String(b).trim()).filter(Boolean))]
+    : [];
+  if (brands.length === 0) {
+    return NextResponse.json({ error: "أضف براند واحد على الأقل" }, { status: 400 });
+  }
 
   const db = serviceClient();
+  const row = {
+    month,
+    name,
+    brands,
+    active: body?.active !== false,
+    sort_order: Number.isFinite(Number(body?.sort_order)) ? Number(body.sort_order) : 100,
+  };
 
-  const [storeResult, aliasResult] = await Promise.all([
-    db.from("stores").select("id, name, account, city, region, mars_code, retailer_no"),
-    db.from("store_aliases").select("mars_store_no, mars_store_name, account, store_id"),
-  ]);
-  if (storeResult.error) {
-    return NextResponse.json({ error: storeResult.error.message }, { status: 500 });
-  }
-  const stores = (storeResult.data ?? []) as StoreRecord[];
-  const aliases = (aliasResult.data ?? []) as StoreAlias[];
-  const byId = new Map(stores.map((s) => [s.id, s]));
+  const { data, error } = body?.id
+    ? await db.from("activities").update(row).eq("id", String(body.id)).select(SELECT).single()
+    : await db.from("activities").insert(row).select(SELECT).single();
 
-  const rejected: { key: string; reason: string }[] = [];
-  const toWrite: Record<string, unknown>[] = [];
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ activity: data });
+}
 
-  for (const row of rows) {
-    if (isRowEmpty(row)) continue;
+export async function DELETE(request: Request) {
+  const session = await currentSession();
+  if (!session) return NextResponse.json({ error: "غير مصرّح" }, { status: 401 });
 
-    // An unlinked row is matched here so the operator does not have to link
-    // every line by hand before the grid will save.
-    let storeId = row.planned_store_id;
-    let method = row.match_method;
-    let score = row.match_score;
-    if (!storeId) {
-      const result = matchStore(
-        {
-          mars_store_no: row.mars_store_no,
-          mars_store_name: row.mars_store_name,
-          account: row.account,
-        },
-        stores,
-        aliases,
-      );
-      storeId = result.store_id;
-      method = result.match_method;
-      score = result.match_score;
-    }
+  const id = new URL(request.url).searchParams.get("id");
+  if (!id) return NextResponse.json({ error: "id مطلوب" }, { status: 400 });
 
-    const resolved: ActivityDraft = {
-      ...row,
-      planned_store_id: storeId,
-      match_method: method,
-      match_score: score,
-    };
-    if (!isRowValid(resolved)) {
-      rejected.push({ key: row.key, reason: "سطر ناقص أو غير مربوط" });
-      continue;
-    }
-
-    const store = storeId ? byId.get(storeId) : undefined;
-    toWrite.push({
-      ...(row.id ? { id: row.id } : {}),
-      month,
-      brand: resolved.brand,
-      display_type: resolved.display_type,
-      promo_desc: resolved.promo_desc || null,
-      effective_from: resolved.effective_from || null,
-      effective_to: resolved.effective_to || null,
-      planned_store_id: storeId,
-      // Denormalized from the linked store so the export does not have to join.
-      account: store?.account ?? resolved.account ?? null,
-      region: store?.region ?? null,
-      city: store?.city ?? null,
-      mars_store_no: resolved.mars_store_no || null,
-      mars_store_name: resolved.mars_store_name || null,
-      match_method: method,
-      match_score: score,
-    });
-  }
-
-  if (deleted.length > 0) {
-    // Only lines nobody has reported against may be removed; the rest are the
-    // audit trail for work already done.
-    const { data: used } = await db
-      .from("submissions")
-      .select("activity_id")
-      .in("activity_id", deleted);
-    const locked = new Set((used ?? []).map((r) => r.activity_id));
-    const removable = deleted.filter((id) => !locked.has(id));
-    if (removable.length > 0) {
-      const { error } = await db.from("activities").delete().in("id", removable);
-      if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-    for (const id of deleted.filter((id) => locked.has(id))) {
-      rejected.push({ key: id, reason: "فيه إدخالات مرتبطة، ما ينحذف" });
-    }
-  }
-
-  let saved: unknown[] = [];
-  if (toWrite.length > 0) {
-    const { data, error } = await db
-      .from("activities")
-      .upsert(toWrite, { onConflict: "id" })
-      .select(SELECT);
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    saved = data ?? [];
-  }
-
-  return NextResponse.json({ saved, rejected });
+  const db = serviceClient();
+  // Hidden rather than deleted: submissions reference it and the history has to
+  // keep resolving it.
+  const { error } = await db.from("activities").update({ active: false }).eq("id", id);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json({ ok: true });
 }

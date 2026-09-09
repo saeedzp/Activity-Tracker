@@ -15,7 +15,7 @@ export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
 const SELECT =
-  "id, month, store_id, emp_id, brand, display_type, entered, entry_date," +
+  "id, month, store_id, emp_id, activity_name, brands, display_type, entered, entry_date," +
   " implementation_date, status, reason_code, alt_store_name, note," +
   " custom_posm, activity_id, submitted_at, approved";
 

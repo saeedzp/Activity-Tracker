@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { serviceClient } from "@/lib/supabase";
 import { currentSession } from "@/lib/session";
+import { isAdmin } from "@/lib/admin";
 
 // Cloudflare Pages runs every route on the edge runtime.
 export const runtime = "edge";
@@ -20,6 +21,9 @@ const SELECT =
 export async function GET(request: Request) {
   const session = await currentSession();
   if (!session) return NextResponse.json({ error: "غير مصرّح" }, { status: 401 });
+  if (!(await isAdmin())) {
+    return NextResponse.json({ error: "يلزم الرقم السري" }, { status: 403 });
+  }
 
   const url = new URL(request.url);
   const month = url.searchParams.get("month")?.trim();

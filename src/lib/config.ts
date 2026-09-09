@@ -14,6 +14,7 @@ export const REQUIRED_ENV = [
 ] as const;
 
 export const OPTIONAL_ENV = [
+  "ADMIN_PASSCODE",
   "NEXT_PUBLIC_SUPABASE_ANON_KEY",
   "R2_ACCOUNT_ID",
   "R2_ACCESS_KEY_ID",

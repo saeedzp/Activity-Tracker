@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 /** The admin screens had no way between them but typing the URL. */
 const TABS = [
@@ -12,6 +12,14 @@ const TABS = [
 
 export function AdminNav() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  async function lock() {
+    await fetch("/api/admin-login", { method: "DELETE" });
+    router.push("/stores");
+    router.refresh();
+  }
+
   return (
     <nav className="mb-5 flex flex-wrap gap-2 border-b border-[var(--line)] pb-3">
       {TABS.map((tab) => {
@@ -30,6 +38,13 @@ export function AdminNav() {
           </a>
         );
       })}
+      <button
+        type="button"
+        onClick={lock}
+        className="mr-auto rounded-lg border border-[var(--line)] bg-white px-3 py-1.5 text-sm text-[var(--mute)]"
+      >
+        قفل الإدارة
+      </button>
     </nav>
   );
 }

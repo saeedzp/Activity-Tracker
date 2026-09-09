@@ -1,5 +1,4 @@
-import { redirect } from "next/navigation";
-import { currentSession } from "@/lib/session";
+import { requireAdmin } from "@/lib/admin-guard";
 import { missingEnv } from "@/lib/config";
 import { serviceClient } from "@/lib/supabase";
 import { SetupNeeded } from "@/components/SetupNeeded";
@@ -14,8 +13,7 @@ export default async function RoutePage() {
   const missing = missingEnv();
   if (missing.length > 0) return <SetupNeeded missing={missing} />;
 
-  const session = await currentSession();
-  if (!session) redirect("/");
+  await requireAdmin("/admin/route");
 
   const db = serviceClient();
   const [stores, users] = await Promise.all([

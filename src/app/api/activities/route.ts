@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { serviceClient } from "@/lib/supabase";
 import { currentSession } from "@/lib/session";
+import { isAdmin } from "@/lib/admin";
 
 // Cloudflare Pages runs every route on the edge runtime.
 export const runtime = "edge";
@@ -11,6 +12,9 @@ const SELECT = "id, month, name, brands, active, sort_order";
 export async function GET(request: Request) {
   const session = await currentSession();
   if (!session) return NextResponse.json({ error: "غير مصرّح" }, { status: 401 });
+  if (!(await isAdmin())) {
+    return NextResponse.json({ error: "يلزم الرقم السري" }, { status: 403 });
+  }
 
   const month = new URL(request.url).searchParams.get("month")?.trim();
   if (!month) return NextResponse.json({ error: "اختر الشهر" }, { status: 400 });
@@ -31,6 +35,9 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const session = await currentSession();
   if (!session) return NextResponse.json({ error: "غير مصرّح" }, { status: 401 });
+  if (!(await isAdmin())) {
+    return NextResponse.json({ error: "يلزم الرقم السري" }, { status: 403 });
+  }
 
   const body = await request.json().catch(() => null);
   const month = String(body?.month ?? "").trim();
@@ -70,6 +77,9 @@ export async function POST(request: Request) {
 export async function DELETE(request: Request) {
   const session = await currentSession();
   if (!session) return NextResponse.json({ error: "غير مصرّح" }, { status: 401 });
+  if (!(await isAdmin())) {
+    return NextResponse.json({ error: "يلزم الرقم السري" }, { status: 403 });
+  }
 
   const id = new URL(request.url).searchParams.get("id");
   if (!id) return NextResponse.json({ error: "id مطلوب" }, { status: 400 });

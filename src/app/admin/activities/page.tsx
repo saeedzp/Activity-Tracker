@@ -1,5 +1,4 @@
-import { redirect } from "next/navigation";
-import { currentSession } from "@/lib/session";
+import { requireAdmin } from "@/lib/admin-guard";
 import { missingEnv } from "@/lib/config";
 import { serviceClient } from "@/lib/supabase";
 import { SetupNeeded } from "@/components/SetupNeeded";
@@ -19,8 +18,7 @@ export default async function ActivitiesPage({
   const missing = missingEnv();
   if (missing.length > 0) return <SetupNeeded missing={missing} />;
 
-  const session = await currentSession();
-  if (!session) redirect("/");
+  await requireAdmin("/admin/activities");
 
   const { month: requested } = await searchParams;
   const month = requested?.trim() || monthOf(new Date());

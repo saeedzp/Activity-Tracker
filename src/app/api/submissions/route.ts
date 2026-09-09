@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { serviceClient } from "@/lib/supabase";
 import { currentSession } from "@/lib/session";
 import {
+  asksCustomPosm,
   STATUSES,
   isClosing,
   reasonCodesFor,
@@ -71,6 +72,12 @@ export async function POST(request: Request) {
       reason_code: status === "Implemented in another store" ? null : reasonCode,
       alt_store_name: requiresAltStoreName(status) ? altStoreName : null,
       note,
+      // Only the permanent fixtures are asked, so anything else stores null
+      // rather than a false that would read as "no POSM fitted".
+      custom_posm:
+        asksCustomPosm(displayType) && typeof body?.custom_posm === "boolean"
+          ? body.custom_posm
+          : null,
       // submitted_at is left to the database default: the phone clock is not trusted.
     })
     .select("id, submitted_at")

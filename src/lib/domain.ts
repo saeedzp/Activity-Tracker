@@ -97,6 +97,18 @@ export const DISPLAY_TYPE_AR: Record<DisplayType, string> = {
   Rebrandable: "استاند حديد قابل لتغيير المواد الدعائية",
 };
 
+/**
+ * Permanent fixtures rather than campaign stands: they stay in the store and
+ * get re-dressed, so the question that matters is whether this campaign's own
+ * POSM was fitted. The campaign stands carry their branding in the unit itself,
+ * so asking there would be meaningless.
+ */
+export const CUSTOM_POSM_TYPES: readonly DisplayType[] = ["GE", "GMU", "Rebrandable"];
+
+export function asksCustomPosm(type: string): boolean {
+  return (CUSTOM_POSM_TYPES as readonly string[]).includes(type);
+}
+
 export function displayTypeAr(type: string): string {
   return DISPLAY_TYPE_AR[type as DisplayType] ?? type;
 }

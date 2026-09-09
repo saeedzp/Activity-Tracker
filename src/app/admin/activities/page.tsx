@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { currentSession } from "@/lib/session";
 import { missingEnv } from "@/lib/config";
 import { SetupNeeded } from "@/components/SetupNeeded";
+import { AdminNav } from "@/components/AdminNav";
 import { serviceClient } from "@/lib/supabase";
 import { ActivityGrid } from "@/components/ActivityGrid";
 import type { ActivityDraft } from "@/lib/grid";
@@ -59,6 +60,7 @@ export default async function ActivitiesPage({
 
   return (
     <main className="mx-auto max-w-[1400px] p-4">
+      <AdminNav />
       <header className="mb-4 flex flex-wrap items-baseline gap-3">
         <h1 className="text-xl font-bold">جدول الاكتفيتي</h1>
         <form className="flex items-center gap-2 text-sm">

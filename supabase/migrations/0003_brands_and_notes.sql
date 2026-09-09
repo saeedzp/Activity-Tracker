@@ -57,3 +57,12 @@ alter table submissions add constraint submissions_reason_shape check (
      -- 'Other' without the explanation is just a shrug.
      and (reason_code <> 'Other' or coalesce(btrim(note), '') <> ''))
 );
+
+-- The three permanent stand types (gondola, GMU, the rebrandable metal unit)
+-- are re-dressed for each campaign rather than replaced, so the only thing
+-- worth asking about them is whether the campaign's own POSM went on.
+-- Null everywhere else: the question was never put.
+alter table submissions add column if not exists custom_posm boolean;
+
+comment on column submissions.custom_posm is
+  'Was campaign-specific POSM fitted? Asked only for GE, GMU and Rebrandable; null otherwise.';

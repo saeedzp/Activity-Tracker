@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  asksCustomPosm,
   DISPLAY_TYPES,
   displayTypeAr,
   reasonAr,
@@ -52,6 +53,7 @@ export function EntryForm({
   const [otherReason, setOtherReason] = useState("");
   const [altStoreName, setAltStoreName] = useState("");
   const [entryDate, setEntryDate] = useState("");
+  const [customPosm, setCustomPosm] = useState<boolean | null>(null);
   const [photos, setPhotos] = useState<PreparedPhoto[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -61,6 +63,8 @@ export function EntryForm({
   const didNot = answer === "no";
   const elsewhere = answer === "other";
   const needsOtherText = didNot && reasonCode === "Other";
+  // Only worth asking once the stand is actually in the store.
+  const needsPosmAnswer = wentIn && asksCustomPosm(displayType);
 
   const ready =
     brand !== "" &&
@@ -69,7 +73,13 @@ export function EntryForm({
     (!wentIn || photos.length >= 1) &&
     (!didNot || reasonCode !== "") &&
     (!needsOtherText || otherReason.trim() !== "") &&
-    (!elsewhere || altStoreName.trim() !== "");
+    (!elsewhere || altStoreName.trim() !== "") &&
+    (!needsPosmAnswer || customPosm !== null);
+
+  function chooseDisplayType(type: string) {
+    setDisplayType(type);
+    if (!asksCustomPosm(type)) setCustomPosm(null);
+  }
 
   function chooseAnswer(key: AnswerKey) {
     setAnswer(key);
@@ -77,7 +87,10 @@ export function EntryForm({
     setOtherReason("");
     setAltStoreName("");
     // Photos only belong to an answer that claims the stand is there.
-    if (key !== "yes") setPhotos([]);
+    if (key !== "yes") {
+      setPhotos([]);
+      setCustomPosm(null);
+    }
     if (key !== "no" && !entryDate) setEntryDate(todayIso());
     if (key === "yes" && !entryDate) setEntryDate(todayIso());
   }
@@ -100,6 +113,7 @@ export function EntryForm({
           reason_code: didNot ? reasonCode : null,
           alt_store_name: elsewhere ? altStoreName.trim() : null,
           note: needsOtherText ? otherReason.trim() : null,
+          custom_posm: needsPosmAnswer ? customPosm : null,
           photo_count: photos.length,
         }),
       });
@@ -127,6 +141,7 @@ export function EntryForm({
     setAltStoreName("");
     setEntryDate("");
     setPhotos([]);
+    setCustomPosm(null);
     setStep("form");
   }
 
@@ -176,6 +191,9 @@ export function EntryForm({
           {needsOtherText && <Row label="تفاصيل السبب" value={otherReason.trim()} />}
           {elsewhere && <Row label="السوق الفعلي" value={altStoreName.trim()} />}
           {!didNot && <Row label="التاريخ" value={formatDateAr(entryDate)} />}
+          {needsPosmAnswer && (
+            <Row label="مواد دعائية مخصصة" value={customPosm ? "نعم" : "لا"} />
+          )}
           {wentIn && <Row label="الصور" value={`${photos.length}`} />}
         </dl>
 
@@ -254,7 +272,7 @@ export function EntryForm({
           <button
             key={t}
             type="button"
-            onClick={() => setDisplayType(t)}
+            onClick={() => chooseDisplayType(t)}
             className={`rounded-xl border p-3 text-right text-sm font-bold ${
               displayType === t
                 ? "border-[var(--ink)] bg-[var(--ink)] text-white"
@@ -283,6 +301,36 @@ export function EntryForm({
           </button>
         ))}
       </div>
+
+      {needsPosmAnswer && (
+        <>
+          <Label>هل تم تركيب مواد دعائية مخصصة؟</Label>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setCustomPosm(true)}
+              className={`flex-1 rounded-xl border p-3 font-bold ${
+                customPosm === true
+                  ? "border-[var(--ink)] bg-[var(--ink)] text-white"
+                  : "border-[var(--line)] bg-white"
+              }`}
+            >
+              نعم
+            </button>
+            <button
+              type="button"
+              onClick={() => setCustomPosm(false)}
+              className={`flex-1 rounded-xl border p-3 font-bold ${
+                customPosm === false
+                  ? "border-[var(--ink)] bg-[var(--ink)] text-white"
+                  : "border-[var(--line)] bg-white"
+              }`}
+            >
+              لا
+            </button>
+          </div>
+        </>
+      )}
 
       {wentIn && (
         <>

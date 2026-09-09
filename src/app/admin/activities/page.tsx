@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import { currentSession } from "@/lib/session";
+import { missingEnv } from "@/lib/config";
+import { SetupNeeded } from "@/components/SetupNeeded";
 import { serviceClient } from "@/lib/supabase";
 import { ActivityGrid } from "@/components/ActivityGrid";
 import type { ActivityDraft } from "@/lib/grid";
@@ -18,6 +20,10 @@ export default async function ActivitiesPage({
 }: {
   searchParams: Promise<{ period?: string }>;
 }) {
+  // Checked before the session, which needs SESSION_SECRET to even be read.
+  const missing = missingEnv();
+  if (missing.length > 0) return <SetupNeeded missing={missing} />;
+
   const session = await currentSession();
   if (!session) redirect("/");
 

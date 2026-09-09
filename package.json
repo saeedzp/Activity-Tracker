@@ -11,7 +11,8 @@
     "seed": "tsx scripts/seed.ts",
     "cf:build": "node scripts/stamp-version.mjs && npx @cloudflare/next-on-pages",
     "preview": "npx @cloudflare/next-on-pages && npx wrangler pages dev .vercel/output/static --compatibility-flags=nodejs_compat",
-    "deploy": "npx @cloudflare/next-on-pages && npx wrangler pages deploy .vercel/output/static --project-name=activity-tracker-d8a"
+    "deploy": "npx @cloudflare/next-on-pages && npx wrangler pages deploy .vercel/output/static --project-name=activity-tracker-d8a",
+    "icons": "node scripts/build-icons.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",

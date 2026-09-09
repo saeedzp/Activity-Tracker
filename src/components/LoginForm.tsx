@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Logo } from "./Logo";
 
 export function LoginForm() {
   const router = useRouter();
@@ -36,6 +37,11 @@ export function LoginForm() {
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-[560px] flex-col justify-center p-5">
+      <div className="mb-6 flex flex-col items-center gap-3">
+        <Logo size={72} />
+        <span className="text-lg font-bold">Activity Tracker</span>
+      </div>
+
       <h1 className="mb-1 text-xl font-bold">سجّل دخولك</h1>
       <p className="mb-6 text-sm text-[var(--mute)]">اكتب رقمك الوظيفي.</p>
 

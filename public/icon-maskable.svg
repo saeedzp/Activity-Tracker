@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Activity Tracker">
+  <title>Activity Tracker</title>
+  <rect width="512" height="512" fill="#17150F"/>
+  <g transform="translate(256 256) scale(0.78) translate(-256 -256)">
+  <!-- Header panel: every real display stand carries a branded topper. -->
+  <rect x="126" y="80" width="260" height="66" rx="18" fill="#E4002B"/>
+  <!-- Two shelves, tilted forward the way stand shelves are so the product faces the shopper. -->
+  <g transform="rotate(-8 256 250)">
+    <rect x="132" y="196" width="72" height="56" rx="13" fill="#F5B301"/>
+    <rect x="216" y="182" width="72" height="70" rx="13" fill="#00A868"/>
+    <rect x="300" y="202" width="72" height="50" rx="13" fill="#0A7CC4"/>
+    <rect x="120" y="256" width="264" height="22" rx="11" fill="#FFFFFF"/>
+  </g>
+  <g transform="rotate(-8 256 360)">
+    <rect x="132" y="306" width="72" height="56" rx="13" fill="#7B2E8E"/>
+    <rect x="216" y="292" width="72" height="70" rx="13" fill="#FF2E88"/>
+    <rect x="300" y="312" width="72" height="50" rx="13" fill="#F5B301"/>
+    <rect x="120" y="366" width="264" height="22" rx="11" fill="#FFFFFF"/>
+  </g>
+  <rect x="152" y="416" width="208" height="26" rx="12" fill="#FFFFFF" opacity=".75"/>
+  </g>
+</svg>

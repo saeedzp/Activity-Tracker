@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { serviceClient } from "@/lib/supabase";
 import { SESSION_COOKIE, SESSION_MAX_AGE, encodeSession } from "@/lib/session";
 
+// Cloudflare Pages runs every route on the edge runtime.
+export const runtime = "edge";
+
 /** Sign in with an employee number. No password: the number is the credential. */
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
@@ -31,7 +34,7 @@ export async function POST(request: Request) {
     name: data.name,
     role: data.role,
   });
-  response.cookies.set(SESSION_COOKIE, encodeSession({
+  response.cookies.set(SESSION_COOKIE, await encodeSession({
     empId: data.emp_id,
     role: data.role,
     name: data.name,

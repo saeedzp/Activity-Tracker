@@ -4,6 +4,9 @@ import { currentSession } from "@/lib/session";
 import { isRowEmpty, isRowValid, type ActivityDraft } from "@/lib/grid";
 import { matchStore, type StoreAlias, type StoreRecord } from "@/lib/match";
 
+// Cloudflare Pages runs every route on the edge runtime.
+export const runtime = "edge";
+
 const SELECT =
   "id, period, brand, display_type, promo_desc, effective_from, effective_to," +
   " planned_store_id, account, region, city, mars_store_no, mars_store_name," +

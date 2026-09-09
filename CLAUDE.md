@@ -74,6 +74,31 @@ Not Implemented              → Account Restriction | Contract Issue | OOS | Sp
 نفس أعمدة مارس الـ20 بالترتيب. عند `Implemented in another store` يُكتب اسم السوق
 الفعلي في `Additional Comments`.
 
+## النشر — Cloudflare Pages دائماً
+
+**كل مشاريع هذا المستخدم تُنشر على Cloudflare Pages، لا Workers.** لا تقترح
+Workers ولا تحوّل المشروع إليه.
+
+يترتب على هذا قيود لازمة:
+
+- المحوّل هو `@cloudflare/next-on-pages`، ومخرجاته `.vercel/output/static`.
+- **كل** route و page لازم فيها `export const runtime = "edge"`. أي مسار بدونها
+  يفشل البناء.
+- ممنوع استعمال `node:` APIs في كود يعمل على السيرفر. استعمل Web APIs:
+  `crypto.subtle` بدل `node:crypto`، و`atob/btoa` بدل `Buffer`.
+- `next` مثبّت على `15.5.2` **بالضبط بدون caret** — `next-on-pages` لا يدعم
+  أحدث منها، وأي caret يجعل npm عند Cloudflare يتجاوزها فيفشل البناء.
+- `.npmrc` فيه `legacy-peer-deps=true` لتعارض تبعية اختيارية بين `wrangler`
+  و`next-on-pages`. لا تحذفه.
+- `nodejs_compat` مطلوب كـ compatibility flag في إعدادات Pages.
+
+إعدادات لوحة Cloudflare:
+
+| الحقل | القيمة |
+|---|---|
+| Build command | `npm run cf:build` |
+| Build output directory | `.vercel/output/static` |
+
 ## الأمان والـ Git
 
 - لا تكتب أي مفتاح حقيقي في أي ملف داخل الريبو. المفاتيح في `.env.local` فقط.

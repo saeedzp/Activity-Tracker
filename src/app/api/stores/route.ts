@@ -3,6 +3,9 @@ import { serviceClient } from "@/lib/supabase";
 import { currentSession } from "@/lib/session";
 import { rankCandidates, type StoreRecord } from "@/lib/match";
 
+// Cloudflare Pages runs every route on the edge runtime.
+export const runtime = "edge";
+
 /**
  * Store lookup for the grid's store picker.
  *

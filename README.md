@@ -60,43 +60,66 @@ npm test          # vitest
 npm run build     # لازم يمر بدون أخطاء قبل أي push
 ```
 
-## النشر على Cloudflare
+## النشر على Cloudflare Pages
 
-المشروع فيه API routes وصفحات server-side، فما ينشر كموقع ثابت.
-يستعمل محوّل `@opennextjs/cloudflare` اللي يحوّل مخرجات Next إلى Worker.
-
-**لا تستعمل** `.next` كمجلد مخرجات — ما راح يشتغل.
+المشروع فيه API routes وصفحات server-side، ويُنشر عبر `@cloudflare/next-on-pages`
+اللي يحوّل مخرجات Next إلى Pages Functions.
 
 ### الإعداد في لوحة Cloudflare
 
-Workers & Pages → **Create → Workers → Import a repository** واختر هذا الريبو، ثم:
+Workers & Pages → **Create → Pages → Connect to Git** واختر هذا الريبو:
 
 | الحقل | القيمة |
 |---|---|
+| Framework preset | Next.js |
 | Build command | `npm run cf:build` |
-| Deploy command | `npx wrangler deploy` |
-| Build output directory | `.open-next` |
+| Build output directory | `.vercel/output/static` |
 
-الإعدادات الباقية في `wrangler.jsonc` داخل الريبو، ومنها `nodejs_compat`
-وهو **إجباري** لأن توقيع كوكي الجلسة يستعمل `node:crypto`.
+ثم **Settings → Functions → Compatibility flags** أضف `nodejs_compat`
+لبيئتي Production و Preview. بدونها الموقع يبني وينهار وقت التشغيل.
 
 ### متغيرات البيئة
 
-في إعدادات المشروع → **Variables and Secrets** أضف كل المتغيرات من
-`.env.example` لبيئتي Production و Preview.
+**Settings → Environment variables** لبيئتي Production و Preview:
 
-`SUPABASE_SERVICE_ROLE_KEY` و `SESSION_SECRET` ومفاتيح R2 تُضاف نوع
-**Secret** لا Text — وإلا تظهر بالعادي في اللوحة وفي السجلات.
-
-### تجربة النشر محلياً قبل الرفع
+| المتغير | ملاحظة |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | |
+| `SUPABASE_SERVICE_ROLE_KEY` | **Secret** |
+| `SESSION_SECRET` | **Secret** — ولّده بالأمر تحت |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | |
+| مفاتيح `R2_*` | **Secret** — للصور لاحقاً |
 
 ```bash
-npm run preview     # يبني ويشغّل الـ Worker محلياً، نفس بيئة Cloudflare
+node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"
+```
+
+### تأكد إن النشر سليم
+
+افتح `/api/health` بعد النشر. الرد يقول أي متغير ناقص وهل القاعدة ترد،
+بدون ما يكشف أي قيمة سرية. المتوقع:
+
+```json
+{ "ok": true, "missing": [], "database": { "reachable": true, "stores": 287, "users": 91 } }
+```
+
+### قيود لازم تعرفها
+
+Pages يشغّل كل شي على **edge runtime**، فـ:
+
+- كل route و page فيها `export const runtime = "edge"`.
+- ممنوع `node:` APIs في كود السيرفر — نستعمل `crypto.subtle` بدل `node:crypto`.
+- `next` مثبّت على `15.5.2` بالضبط، لأن `next-on-pages` لا يدعم أحدث منها.
+
+### تجربة محلية بنفس بيئة Pages
+
+```bash
+npm run preview     # يبني ويشغّل الموقع محلياً كـ Pages Function
 npm run deploy      # نشر مباشر من جهازك
 ```
 
-`npm run dev` يشغّل Next العادي وهو أسرع للتطوير، لكنه **لا يكشف** أخطاء
-تظهر فقط في بيئة الـ Worker. جرّب `npm run preview` قبل أي نشر.
+`npm run dev` أسرع للتطوير لكنه **لا يكشف** أخطاء تظهر فقط في بيئة edge.
+جرّب `npm run preview` قبل أي نشر.
 
 ### R2 للصور
 

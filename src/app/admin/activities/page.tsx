@@ -8,6 +8,9 @@ import type { ActivityDraft } from "@/lib/grid";
 import { ACTIVITY_GRID_SELECT, toDraft, type ActivityRow } from "@/lib/activity-row";
 import type { StoreOption } from "@/components/StorePicker";
 
+// Cloudflare Pages runs every route on the edge runtime.
+export const runtime = "edge";
+
 export const dynamic = "force-dynamic";
 
 /** Default to the current month, which is what the operator is planning. */

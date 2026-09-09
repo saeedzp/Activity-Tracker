@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { envReport, missingEnv } from "@/lib/config";
 import { serviceClient } from "@/lib/supabase";
 
+// Cloudflare Pages runs every route on the edge runtime.
+export const runtime = "edge";
+
 export const dynamic = "force-dynamic";
 
 /**

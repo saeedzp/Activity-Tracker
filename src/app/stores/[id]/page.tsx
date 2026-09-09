@@ -24,7 +24,12 @@ export default async function StoreEntryPage({
   const { id } = await params;
   const db = serviceClient();
   const [storeResult, brandResult] = await Promise.all([
-    db.from("stores").select("id, name, account, city, me_id, tl_id").eq("id", id).maybeSingle(),
+    db
+      .from("stores")
+      .select("id, name, account, city, me_id, tl_id")
+      .eq("id", id)
+      .eq("active", true)
+      .maybeSingle(),
     db
       .from("brands")
       .select("id, name, image_url, color")

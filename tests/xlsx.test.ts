@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { zipSync, strToU8 } from "fflate";
-import { convert, readSheet } from "../scripts/xlsx-to-csv";
+import { convert, readSheet } from "@/lib/xlsx";
 
 const COLUMNS = [
   "STORE ID", "MARS Code", "MARS Store", "Region", "City", "Account Name",

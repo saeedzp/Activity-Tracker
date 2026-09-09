@@ -23,6 +23,9 @@ export default async function StoresPage() {
     .select("id, name, account, city, region, me_id, me_name")
     // Own stores for one column, the whole span for the other.
     .eq(session.role === "me" ? "me_id" : "tl_id", session.empId)
+    // A store switched off in the route upload is gone from the list, but its
+    // past submissions and the export still resolve it.
+    .eq("active", true)
     .order("name");
 
   const stores = (data ?? []) as unknown as StoreRow[];

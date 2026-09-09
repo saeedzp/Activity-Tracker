@@ -66,3 +66,10 @@ alter table submissions add column if not exists custom_posm boolean;
 
 comment on column submissions.custom_posm is
   'Was campaign-specific POSM fitted? Asked only for GE, GMU and Rebrandable; null otherwise.';
+
+-- A store that closes leaves the route file, but its submissions stay and the
+-- export still has to resolve it, so it is switched off rather than deleted.
+alter table stores add column if not exists active boolean not null default true;
+
+create index if not exists stores_active_me_idx on stores (active, me_id);
+create index if not exists stores_active_tl_idx on stores (active, tl_id);

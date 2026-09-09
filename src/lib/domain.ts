@@ -1,0 +1,122 @@
+/**
+ * Frozen project vocabulary.
+ *
+ * Storage and export are ALWAYS English. Arabic strings here are display-only.
+ * Do not invent statuses, reason codes or display types beyond these lists.
+ */
+
+export const STATUSES = [
+  "Implemented",
+  "Implemented in another store",
+  "Not Implemented",
+] as const;
+export type Status = (typeof STATUSES)[number];
+
+export const REASON_CODES_BY_STATUS = {
+  Implemented: ["Low Stock", "POSM not received", "Without POSM"],
+  "Implemented in another store": [],
+  "Not Implemented": [
+    "Account Restriction",
+    "Contract Issue",
+    "OOS",
+    "Space Issue",
+    "POSM not received",
+    "Stand not received",
+    "Stand Damaged",
+    "Stand Missing",
+    "Store Refused",
+    "Store renovation",
+    "Store Temporarily Closed",
+    "Store Permanently Closed",
+    "Other",
+  ],
+} as const satisfies Record<Status, readonly string[]>;
+
+export type ReasonCode =
+  (typeof REASON_CODES_BY_STATUS)[Status][number] extends never
+    ? string
+    : string;
+
+/** A line closes ONLY on these two statuses. Everything else stays open. */
+export const CLOSING_STATUSES: readonly Status[] = [
+  "Implemented",
+  "Implemented in another store",
+];
+
+export function isClosing(status: Status): boolean {
+  return CLOSING_STATUSES.includes(status);
+}
+
+export function reasonCodesFor(status: Status): readonly string[] {
+  return REASON_CODES_BY_STATUS[status];
+}
+
+/** `Implemented in another store` carries no reason code, but needs the real store name. */
+export function requiresAltStoreName(status: Status): boolean {
+  return status === "Implemented in another store";
+}
+
+export function requiresReasonCode(status: Status): boolean {
+  return reasonCodesFor(status).length > 0;
+}
+
+export const DISPLAY_TYPES = [
+  "50X50",
+  "1x1",
+  "2x1",
+  "2x2",
+  "3x2",
+  "6x2",
+  "GE",
+  "GMU",
+  "Rebrandable",
+] as const;
+export type DisplayType = (typeof DISPLAY_TYPES)[number];
+
+export const MATCH_METHODS = ["exact", "fuzzy", "manual", "unlinked"] as const;
+export type MatchMethod = (typeof MATCH_METHODS)[number];
+
+export const ROLES = ["me", "tl"] as const;
+export type Role = (typeof ROLES)[number];
+
+/* ---------------------------------------------------------------- Arabic UI */
+
+export const STATUS_AR: Record<Status, string> = {
+  Implemented: "تم التنفيذ",
+  "Implemented in another store": "تم التنفيذ في سوق آخر",
+  "Not Implemented": "لم يتم التنفيذ",
+};
+
+export const REASON_AR: Record<string, string> = {
+  "Low Stock": "مخزون منخفض",
+  "POSM not received": "لم تصل المواد الدعائية",
+  "Without POSM": "بدون مواد دعائية",
+  "Account Restriction": "قيود من الأكاونت",
+  "Contract Issue": "مشكلة في العقد",
+  OOS: "نفاد المخزون",
+  "Space Issue": "لا توجد مساحة",
+  "Stand not received": "لم يصل الاستاند",
+  "Stand Damaged": "الاستاند تالف",
+  "Stand Missing": "الاستاند مفقود",
+  "Store Refused": "السوق رفض",
+  "Store renovation": "السوق تحت التجديد",
+  "Store Temporarily Closed": "السوق مغلق مؤقتاً",
+  "Store Permanently Closed": "السوق مغلق نهائياً",
+  Other: "أخرى",
+};
+
+export const MATCH_METHOD_AR: Record<MatchMethod, string> = {
+  exact: "مطابقة دقيقة",
+  fuzzy: "مطابقة تقريبية",
+  manual: "ربط يدوي",
+  unlinked: "غير مربوط",
+};
+
+export function statusAr(status: Status): string {
+  return STATUS_AR[status] ?? status;
+}
+
+export function reasonAr(code: string | null | undefined): string {
+  if (!code) return "—";
+  return REASON_AR[code] ?? code;
+}

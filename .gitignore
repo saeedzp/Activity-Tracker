@@ -1,0 +1,12 @@
+node_modules/
+.next/
+.env*.local
+.env
+out/
+.DS_Store
+*.log
+next-env.d.ts
+/coverage
+/.vercel
+# Real seed data contains employee names and IDs — keep local only
+seed/stores.csv

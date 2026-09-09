@@ -60,13 +60,44 @@ npm test          # vitest
 npm run build     # لازم يمر بدون أخطاء قبل أي push
 ```
 
-## النشر على Cloudflare Pages
+## النشر على Cloudflare
 
-1. **Connect to Git** واختر هذا الريبو.
-2. Framework preset: **Next.js**.
-   Build command `npm run build` · Build output `.next`.
-3. أضف متغيرات البيئة من `.env.example` في
-   *Settings → Environment variables* (Production و Preview).
-   `SUPABASE_SERVICE_ROLE_KEY` و مفاتيح R2 تكون **Secret** ولا تُنشر للمتصفح أبداً.
-4. Node version: 20 أو أعلى (`NODE_VERSION=22`).
-5. في R2: أنشئ الباكت، فعّل CORS لدومين الموقع، وحط الدومين العام في `R2_PUBLIC_URL`.
+المشروع فيه API routes وصفحات server-side، فما ينشر كموقع ثابت.
+يستعمل محوّل `@opennextjs/cloudflare` اللي يحوّل مخرجات Next إلى Worker.
+
+**لا تستعمل** `.next` كمجلد مخرجات — ما راح يشتغل.
+
+### الإعداد في لوحة Cloudflare
+
+Workers & Pages → **Create → Workers → Import a repository** واختر هذا الريبو، ثم:
+
+| الحقل | القيمة |
+|---|---|
+| Build command | `npm run cf:build` |
+| Deploy command | `npx wrangler deploy` |
+| Build output directory | `.open-next` |
+
+الإعدادات الباقية في `wrangler.jsonc` داخل الريبو، ومنها `nodejs_compat`
+وهو **إجباري** لأن توقيع كوكي الجلسة يستعمل `node:crypto`.
+
+### متغيرات البيئة
+
+في إعدادات المشروع → **Variables and Secrets** أضف كل المتغيرات من
+`.env.example` لبيئتي Production و Preview.
+
+`SUPABASE_SERVICE_ROLE_KEY` و `SESSION_SECRET` ومفاتيح R2 تُضاف نوع
+**Secret** لا Text — وإلا تظهر بالعادي في اللوحة وفي السجلات.
+
+### تجربة النشر محلياً قبل الرفع
+
+```bash
+npm run preview     # يبني ويشغّل الـ Worker محلياً، نفس بيئة Cloudflare
+npm run deploy      # نشر مباشر من جهازك
+```
+
+`npm run dev` يشغّل Next العادي وهو أسرع للتطوير، لكنه **لا يكشف** أخطاء
+تظهر فقط في بيئة الـ Worker. جرّب `npm run preview` قبل أي نشر.
+
+### R2 للصور
+
+أنشئ الباكت، فعّل CORS لدومين الموقع، وحط الدومين العام في `R2_PUBLIC_URL`.

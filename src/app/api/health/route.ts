@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { envReport, missingEnv } from "@/lib/config";
+import { describeServiceKey, envReport, missingEnv, urlProjectRef } from "@/lib/config";
 import { serviceClient } from "@/lib/supabase";
 
 // Cloudflare Pages runs every route on the edge runtime.
@@ -35,7 +35,14 @@ export async function GET() {
   }
 
   return NextResponse.json(
-    { ok: missing.length === 0 && database.reachable === true, missing, env: envReport(), database },
+    {
+      ok: missing.length === 0 && database.reachable === true,
+      missing,
+      env: envReport(),
+      database,
+      service_key: describeServiceKey(),
+      url_project_ref: urlProjectRef(),
+    },
     { status: missing.length === 0 ? 200 : 503 },
   );
 }

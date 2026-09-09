@@ -26,3 +26,10 @@ create index if not exists activities_month_idx on activities (month);
 -- is the lookup every submission now performs, so it gets its own index.
 create index if not exists activities_plan_lookup_idx
   on activities (month, planned_store_id, brand, display_type);
+
+-- Rows written before the column existed carry no month, so they fall out of
+-- every monthly view. The submission date is the only evidence available for
+-- them; new rows resolve their month from the plan instead.
+update submissions
+set month = to_char(submitted_at at time zone 'UTC', 'YYYY-MM')
+where month is null;

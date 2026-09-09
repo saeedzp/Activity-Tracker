@@ -37,7 +37,6 @@ export function EntryForm({ storeId, storeName }: { storeId: string; storeName: 
   const reasons = status ? reasonCodesFor(status) : [];
   const needsReason = status ? requiresReasonCode(status) : false;
   const needsAltStore = status ? requiresAltStoreName(status) : false;
-  const closes = status !== "" && isClosing(status as Status);
 
   const ready =
     brand !== "" &&
@@ -112,7 +111,6 @@ export function EntryForm({ storeId, storeName }: { storeId: string; storeName: 
         storeName={storeName}
         brand={brand}
         displayType={displayType}
-        closed={closes}
         onAnother={() => {
           setBrand("");
           setDisplayType("");
@@ -155,18 +153,6 @@ export function EntryForm({ storeId, storeName }: { storeId: string; storeName: 
           <Row label="تاريخ التطبيق" value={implDate || "—"} />
           {note.trim() && <Row label="ملاحظة" value={note.trim()} />}
         </dl>
-
-        <div
-          className={`mt-3 rounded-xl p-3 text-sm ${
-            closes
-              ? "bg-[var(--ok-soft)] text-[var(--ok)]"
-              : "bg-[var(--amber-soft)] text-[var(--amber)]"
-          }`}
-        >
-          {closes
-            ? "هذي الحالة تقفل السطر ويخرج من قائمتك."
-            : "هذي الحالة تبقي السوق مفتوحاً في قائمتك."}
-        </div>
 
         {error && (
           <p className="mt-3 rounded-lg bg-[var(--warn-soft)] px-3 py-2 text-sm text-[var(--warn)]">
@@ -340,14 +326,12 @@ function Done({
   storeName,
   brand,
   displayType,
-  closed,
   onAnother,
   onBack,
 }: {
   storeName: string;
   brand: string;
   displayType: string;
-  closed: boolean;
   onAnother: () => void;
   onBack: () => void;
 }) {
@@ -360,18 +344,6 @@ function Done({
       <p className="mt-2 text-sm text-[var(--mute)]">
         {storeName} · {brand} · {displayType}
       </p>
-      <p
-        className={`mx-auto mt-4 max-w-xs rounded-xl px-3 py-2 text-sm ${
-          closed
-            ? "bg-[var(--ok-soft)] text-[var(--ok)]"
-            : "bg-[var(--amber-soft)] text-[var(--amber)]"
-        }`}
-      >
-        {closed
-          ? "السطر أُقفل وخرج من قائمتك."
-          : "السوق باقٍ في قائمتك لأن الحالة ما تقفل."}
-      </p>
-
       <button
         type="button"
         onClick={onAnother}

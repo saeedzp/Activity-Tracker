@@ -91,6 +91,9 @@ Workers ولا تحوّل المشروع إليه.
 - `.npmrc` فيه `legacy-peer-deps=true` لتعارض تبعية اختيارية بين `wrangler`
   و`next-on-pages`. لا تحذفه.
 - `nodejs_compat` مطلوب كـ compatibility flag في إعدادات Pages.
+- **ممنوع وجود `wrangler.jsonc` أو `wrangler.toml` في الريبو.** وجوده يجعل
+  Cloudflare يتجاهل متغيرات البيئة المضبوطة في اللوحة. اللوحة هي المرجع
+  الوحيد، والرايات تُمرَّر صراحةً في سكربتات npm المحلية.
 
 إعدادات لوحة Cloudflare:
 

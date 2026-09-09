@@ -11,7 +11,7 @@
     "seed": "tsx scripts/seed.ts",
     "cf:build": "npx @cloudflare/next-on-pages",
     "preview": "npx @cloudflare/next-on-pages && npx wrangler pages dev .vercel/output/static --compatibility-flags=nodejs_compat",
-    "deploy": "npx @cloudflare/next-on-pages && npx wrangler pages deploy .vercel/output/static"
+    "deploy": "npx @cloudflare/next-on-pages && npx wrangler pages deploy .vercel/output/static --project-name=activity-tracker-d8a"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",

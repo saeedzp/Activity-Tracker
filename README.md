@@ -78,6 +78,9 @@ Workers & Pages → **Create → Pages → Connect to Git** واختر هذا ا
 ثم **Settings → Functions → Compatibility flags** أضف `nodejs_compat`
 لبيئتي Production و Preview. بدونها الموقع يبني وينهار وقت التشغيل.
 
+> لا تضف ملف `wrangler.toml` أو `wrangler.jsonc` للريبو. وجوده يجعل Cloudflare
+> يتجاهل متغيرات البيئة المضبوطة في اللوحة، فتبدو مضبوطة وهي غير مقروءة.
+
 ### متغيرات البيئة
 
 **Settings → Environment variables** لبيئتي Production و Preview:

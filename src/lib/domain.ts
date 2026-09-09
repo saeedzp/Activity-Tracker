@@ -82,28 +82,42 @@ export type Role = (typeof ROLES)[number];
 /* ---------------------------------------------------------------- Arabic UI */
 
 export const STATUS_AR: Record<Status, string> = {
-  Implemented: "تم التنفيذ",
-  "Implemented in another store": "تم التنفيذ في سوق آخر",
-  "Not Implemented": "لم يتم التنفيذ",
+  Implemented: "تم التطبيق",
+  "Implemented in another store": "تم التطبيق في سوق آخر",
+  "Not Implemented": "لم يتم التطبيق",
 };
 
 export const REASON_AR: Record<string, string> = {
-  "Low Stock": "مخزون منخفض",
-  "POSM not received": "لم تصل المواد الدعائية",
-  "Without POSM": "بدون مواد دعائية",
+  "Low Stock": "نقص مخزون",
+  "POSM not received": "لم تصل مواد الدعاية",
+  "Without POSM": "بدون مواد دعاية",
   "Account Restriction": "قيود من الأكاونت",
   "Contract Issue": "مشكلة في العقد",
-  OOS: "نفاد المخزون",
-  "Space Issue": "لا توجد مساحة",
-  "Stand not received": "لم يصل الاستاند",
-  "Stand Damaged": "الاستاند تالف",
+  OOS: "نفاد المنتج",
+  "Space Issue": "ما فيه مساحة",
+  "Stand not received": "الاستاند ما وصل",
+  "Stand Damaged": "الاستاند دامج",
   "Stand Missing": "الاستاند مفقود",
   "Store Refused": "السوق رفض",
   "Store renovation": "السوق تحت التجديد",
-  "Store Temporarily Closed": "السوق مغلق مؤقتاً",
-  "Store Permanently Closed": "السوق مغلق نهائياً",
-  Other: "أخرى",
+  "Store Temporarily Closed": "السوق مقفل مؤقتاً",
+  "Store Permanently Closed": "السوق مقفل نهائياً",
+  Other: "سبب آخر",
 };
+
+/** Brand tiles on the entry screen, with the colour each is drawn in. */
+export const BRANDS = [
+  { name: "Galaxy", color: "#6D2C7E" },
+  { name: "Twix", color: "#C8992B" },
+  { name: "Snickers", color: "#6B3F17" },
+  { name: "Bounty", color: "#0F5FA6" },
+  { name: "Mars", color: "#B4121B" },
+  { name: "Maltesers", color: "#8B3E13" },
+  { name: "Extra", color: "#1B7F5A" },
+  { name: "Skittles", color: "#D2196E" },
+] as const;
+
+export type Brand = (typeof BRANDS)[number]["name"];
 
 export const MATCH_METHOD_AR: Record<MatchMethod, string> = {
   exact: "مطابقة دقيقة",

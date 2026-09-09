@@ -38,8 +38,15 @@ supabase/migrations/0002_rls.sql
 
 ### السييد
 
-ضع ملف الأسواق الحقيقي في `seed/stores.csv` (يبقى محلياً — مستبعد من Git،
-والمرفوع بدله `seed/stores.example.csv` بصفين وهميين):
+حوّل ملف الأسواق الأصلي إلى CSV (الاثنان يبقيان محليين — مستبعدان من Git،
+والمرفوع بدلهما `seed/stores.example.csv` بصفين وهميين):
+
+```bash
+npx tsx scripts/xlsx-to-csv.ts JP_FOR_CLO.xlsx
+```
+
+المحوّل يوحّد الصفوف المكررة ويطبع أي تعارض بين نسختي نفس السوق حتى تراجعه بنفسك.
+بعدها:
 
 ```bash
 npm run seed -- --dry     # قراءة وفحص بدون كتابة

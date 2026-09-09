@@ -13,11 +13,11 @@ import {
 } from "@/lib/match";
 
 const stores: StoreRecord[] = [
-  { id: "W-0001", name: "Panda Sari Street", account: "Panda", retailer_no: "100001", city: "Jeddah", region: "West" },
-  { id: "W-0002", name: "Panda Al Rawdah", account: "PANDA", retailer_no: "100002", city: "Jeddah", region: "West" },
-  { id: "S-0003", name: "Bin Dawood Abha Mall", account: "BD", retailer_no: "100003", city: "Abha", region: "South" },
-  { id: "S-0004", name: "Danube Khamis Mushait", account: "Danube", retailer_no: "0", city: "Khamis", region: "South" },
-  { id: "W-0005", name: "Othaim Madinah Road", account: "Othaim", retailer_no: "100005", city: "Jeddah", region: "West" },
+  { id: "W-0001", name: "Panda Sari Street", account: "Panda", mars_code: "100001", retailer_no: "701", city: "Jeddah", region: "West" },
+  { id: "W-0002", name: "Panda Al Rawdah", account: "PANDA", mars_code: "100002", retailer_no: "0", city: "Jeddah", region: "West" },
+  { id: "S-0003", name: "Bin Dawood Abha Mall", account: "BD", mars_code: "100003", retailer_no: null, city: "Abha", region: "South" },
+  { id: "S-0004", name: "Danube South Two", account: "Danube", mars_code: null, retailer_no: "0", city: "SouthCity", region: "South" },
+  { id: "W-0005", name: "Othaim Madinah Road", account: "Othaim", mars_code: "100005", retailer_no: "174", city: "Jeddah", region: "West" },
 ];
 
 describe("normalization", () => {
@@ -72,7 +72,7 @@ describe("name similarity", () => {
   });
 
   it("scores unrelated names below the threshold", () => {
-    expect(nameSimilarity("Panda Sari Street", "Danube Khamis Mushait")).toBeLessThan(
+    expect(nameSimilarity("Panda Sari Street", "Danube South Two")).toBeLessThan(
       FUZZY_THRESHOLD,
     );
   });
@@ -101,7 +101,7 @@ describe("matchStore stage order", () => {
 
   it("stage 2 never fires on a zero store number", () => {
     const result = matchStore(
-      { mars_store_no: "0", mars_store_name: "Danube Khamis Mushait", account: "Danube" },
+      { mars_store_no: "0", mars_store_name: "Danube South Two", account: "Danube" },
       stores,
     );
     expect(result.match_method).not.toBe("exact");
@@ -156,5 +156,48 @@ describe("rankCandidates", () => {
     expect(out.length).toBeLessThanOrEqual(3);
     expect(out.every((c) => normalizeAccount(c.store.account) === "panda")).toBe(true);
     expect(out[0].score).toBeGreaterThanOrEqual(out[out.length - 1].score);
+  });
+});
+
+describe("stage 2 store number sources", () => {
+  it("matches on the Mars code even when retailer_no is 0 or missing", () => {
+    const result = matchStore(
+      { mars_store_no: "100002", mars_store_name: "no useful name", account: "Panda" },
+      stores,
+    );
+    expect(result.store_id).toBe("W-0002");
+    expect(result.match_method).toBe("exact");
+  });
+
+  it("falls back to retailer_no when no Mars code matches", () => {
+    const result = matchStore(
+      { mars_store_no: "701", mars_store_name: "no useful name", account: "Panda" },
+      stores,
+    );
+    expect(result.store_id).toBe("W-0001");
+    expect(result.match_method).toBe("exact");
+  });
+
+  it("refuses to guess when one number points at two stores", () => {
+    const ambiguous: StoreRecord[] = [
+      { id: "A", name: "Danube South One", account: "Danube", mars_code: "90000009" },
+      { id: "B", name: "Danube South Two", account: "Danube", mars_code: "90000009" },
+    ];
+    const result = matchStore(
+      { mars_store_no: "90000009", mars_store_name: "zzz qqq", account: "Danube" },
+      ambiguous,
+    );
+    expect(result.match_method).not.toBe("exact");
+  });
+
+  it("ignores free text sitting in a store number column", () => {
+    const dirty: StoreRecord[] = [
+      { id: "X", name: "Danube South One", account: "Danube", retailer_no: "Jizan" },
+    ];
+    const result = matchStore(
+      { mars_store_no: "Jizan", mars_store_name: "Danube South One", account: "Danube" },
+      dirty,
+    );
+    expect(result.match_method).not.toBe("exact");
   });
 });

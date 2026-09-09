@@ -23,6 +23,7 @@ interface StoreRow {
   account: string;
   city: string | null;
   region: string | null;
+  mars_code: string | null;
   retailer_no: string | null;
   me_id: string | null;
   me_name: string | null;
@@ -35,6 +36,13 @@ interface UserRow {
   name: string;
   role: "me" | "tl";
   active: boolean;
+}
+
+/** Keep a store number only when it is a non-zero integer; otherwise drop it. */
+function usableNumber(value: string): string | null {
+  const raw = value.trim();
+  if (!/^\d+$/.test(raw)) return null;
+  return Number(raw) === 0 ? null : String(Number(raw));
 }
 
 function pick(rec: Record<string, string>, ...keys: string[]): string {
@@ -68,7 +76,9 @@ export function buildRows(records: Record<string, string>[]): {
       account: normalizeAccount(pick(rec, "Account Name", "Account Code")),
       city: pick(rec, "City") || null,
       region: normalizeRegion(pick(rec, "Region")) || null,
-      retailer_no: pick(rec, "Retailer NO.", "Retailer No", "MARS Code") || null,
+      mars_code: usableNumber(pick(rec, "MARS Code")),
+      // Kept only when it is a real number: the source has 0 and stray text here.
+      retailer_no: usableNumber(pick(rec, "Retailer NO.", "Retailer No")),
       me_id: pick(rec, "ME (1) ID", "ME ID") || null,
       me_name: pick(rec, "ME (1) Name", "ME Name") || null,
       tl_id: pick(rec, "TL ID") || null,

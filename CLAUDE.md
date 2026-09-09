@@ -57,6 +57,18 @@ Not Implemented              → Account Restriction | Contract Issue | OOS | Sp
 `PANDA/Panda/panda → panda` · `BD/Bindawood/Bin Dawood → bin dawood` ·
 `Tier 3 → other mt` · قص المسافات الزائدة · `Madinah → West`.
 
+## بيانات الأسواق
+
+ملف الأسواق الأصلي `.xlsx` والـ CSV المولّد منه **لا يُرفعان أبداً** (فيهما أسماء وأرقام
+موظفين). المرفوع: `scripts/xlsx-to-csv.ts` و `seed/stores.example.csv`.
+
+حقائق ثابتة عن المصدر، لا تفترض غيرها:
+- الملف فيه صفوف مكررة لنفس `STORE ID` — المحوّل يوحّدها ويطبع أي تعارض بدل ما يخمّن.
+- `Retailer NO.` غير موثوق: صفر أو نص في ربع الأسواق تقريباً.
+  **المطابقة تعتمد على `mars_code` أولاً**، و`retailer_no` احتياطي فقط.
+- أي رقم سوق غير رقمي أو يساوي صفراً يُرفض (`isUsableStoreNo`) ولا يُخزَّن.
+- رقم واحد يشير لسوقين = بيانات خاطئة، ما هو مطابقة: يروح لشاشة الربط.
+
 ## التصدير
 
 نفس أعمدة مارس الـ20 بالترتيب. عند `Implemented in another store` يُكتب اسم السوق

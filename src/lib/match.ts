@@ -43,6 +43,9 @@ export interface StoreRecord {
   account: string;
   city?: string | null;
   region?: string | null;
+  /** Mars' own store number. The primary key stage 2 matches on. */
+  mars_code?: string | null;
+  /** The retailer's internal number. Often 0 or missing, so only a fallback. */
   retailer_no?: string | null;
 }
 
@@ -238,13 +241,21 @@ export function matchStore(
   }
 
   // Stage 2 — store number + account, but only for a real number.
+  // Mars' own code is checked first; the retailer number is a fallback because
+  // it arrives as 0 or as free text for a good share of the estate.
   if (isUsableStoreNo(storeNo) && account) {
-    const hit = stores.find(
-      (s) =>
-        normalizeAccount(s.account) === account &&
-        isUsableStoreNo(s.retailer_no) &&
-        normalizeStoreNo(s.retailer_no) === storeNo,
+    const sameAccount = stores.filter(
+      (s) => normalizeAccount(s.account) === account,
     );
+    const matchesOn = (field: keyof StoreRecord) => (s: StoreRecord) =>
+      isUsableStoreNo(s[field]) && normalizeStoreNo(s[field]) === storeNo;
+
+    const byMarsCode = sameAccount.filter(matchesOn("mars_code"));
+    const byRetailerNo = sameAccount.filter(matchesOn("retailer_no"));
+    // One number pointing at two stores is bad data, not a match. Send it to
+    // the linking screen rather than silently picking a side.
+    const candidates = byMarsCode.length > 0 ? byMarsCode : byRetailerNo;
+    const hit = candidates.length === 1 ? candidates[0] : undefined;
     if (hit) {
       return {
         store_id: hit.id,

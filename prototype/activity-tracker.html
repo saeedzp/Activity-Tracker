@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>متابعة الاكتفيتي</title>
+<style>
+:root{
+  --paper:#F7F5F0; --card:#FFFFFF; --ink:#17150F; --mute:#6E685C;
+  --line:#E2DDD1; --amber:#B57A0E; --amber-soft:#F5EAD2;
+  --ok:#2C6A4E; --ok-soft:#E3F0E8; --warn:#9E3B2C; --warn-soft:#F7E6E2;
+  --r:14px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--paper);color:var(--ink);
+  font-family:"Noto Kufi Arabic","Segoe UI",Tahoma,system-ui,sans-serif;font-size:16px;line-height:1.6}
+#root{max-width:560px;margin:0 auto;padding-bottom:90px}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:16px 18px;background:var(--ink);color:#F7F5F0;position:sticky;top:0;z-index:20}
+.brand{display:flex;align-items:center;gap:9px;font-weight:700;letter-spacing:.2px}
+.dot{width:10px;height:10px;border-radius:3px;background:var(--amber);display:inline-block}
+.who{font-size:13px;opacity:.75}
+main{padding:18px}
+h2{font-size:19px;margin:0 0 4px}
+.sub{color:var(--mute);font-size:14px;margin:0 0 18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:15px;margin-bottom:11px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px}
+button,input,select,textarea{font:inherit;color:inherit}
+.btn{width:100%;padding:15px;border:0;border-radius:12px;background:var(--ink);color:#fff;
+  font-weight:700;cursor:pointer;margin-top:8px}
+.btn:disabled{opacity:.35}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line);font-weight:600}
+.btn.amber{background:var(--amber)}
+input[type=text],input[type=date],textarea{width:100%;padding:13px;border:1px solid var(--line);
+  border-radius:11px;background:#fff}
+textarea{min-height:74px;resize:vertical}
+label.lbl{display:block;font-size:13px;color:var(--mute);margin:14px 0 6px}
+.storebtn{display:block;width:100%;text-align:right;background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r);padding:14px 15px;margin-bottom:9px;cursor:pointer}
+.storebtn:active{border-color:var(--amber)}
+.sname{font-weight:700}
+.meta{font-size:13px;color:var(--mute);margin-top:2px}
+.pill{display:inline-block;font-size:12px;padding:3px 10px;border-radius:999px;
+  background:var(--amber-soft);color:#6F4A00;font-weight:700}
+.pill.ok{background:var(--ok-soft);color:var(--ok)}
+.pill.warn{background:var(--warn-soft);color:var(--warn)}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:6px}
+.tile{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 4px;border:1px solid var(--line);
+  border-radius:12px;background:#fff;cursor:pointer;font-size:12px;font-weight:700}
+.tile.on{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.logo{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;color:#fff;font-size:17px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.chip{padding:11px 15px;border:1px solid var(--line);border-radius:11px;background:#fff;cursor:pointer;font-weight:600}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.seg{display:flex;gap:8px;margin-top:6px}
+.seg button{flex:1;padding:14px;border:1px solid var(--line);border-radius:11px;background:#fff;cursor:pointer;font-weight:700}
+.seg button.on-yes{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.seg button.on-no{background:var(--warn-soft);border-color:var(--warn);color:var(--warn)}
+.shots{display:flex;gap:9px;flex-wrap:wrap;margin-top:8px}
+.shot{width:76px;height:76px;border-radius:11px;object-fit:cover;border:1px solid var(--line)}
+.add{width:76px;height:76px;border-radius:11px;border:1px dashed var(--amber);background:#fff;
+  color:var(--amber);font-size:26px;cursor:pointer}
+.back{background:none;border:0;color:var(--mute);padding:0 0 12px;cursor:pointer;font-size:14px}
+.stat{display:flex;gap:10px;margin-bottom:16px}
+.stat div{flex:1;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px;text-align:center}
+.stat b{display:block;font-size:24px;line-height:1.2}
+.stat span{font-size:12px;color:var(--mute)}
+.toast{position:fixed;bottom:22px;right:50%;transform:translate(50%,140%);background:var(--ink);
+  color:#fff;padding:13px 20px;border-radius:12px;transition:transform .25s;z-index:40;font-weight:600}
+.toast.show{transform:translate(50%,0)}
+.empty{text-align:center;color:var(--mute);padding:44px 12px}
+hr{border:0;border-top:1px solid var(--line);margin:18px 0}
+.note{font-size:12px;color:var(--mute);margin-top:20px;line-height:1.7}
+</style>
+</head>
+<body>
+<div id="root">
+  <header class="bar">
+    <div class="brand"><span class="dot"></span> متابعة الاكتفيتي</div>
+    <div id="who" class="who"></div>
+  </header>
+  <main id="screen"></main>
+  <div id="toast" class="toast"></div>
+</div>
+
+<script>
+/* The real store list (287 stores with employee names and numbers) is NOT
+   committed. This prototype keeps two dummy rows so the file still runs;
+   the production data lives in Supabase, seeded from seed/stores.csv. */
+const STORES = [
+  {"id":"W-0001","name":"Panda Sari Street","acc":"Panda","city":"Jeddah","reg":"West",
+   "me":"10001","men":"Employee One","tl":"20001","tln":"Leader One"},
+  {"id":"S-0002","name":"Bin Dawood Abha Mall","acc":"Bin Dawood","city":"Abha","reg":"South",
+   "me":"10002","men":"Employee Two","tl":"20001","tln":"Leader One"}
+];
+const TYPES = ["50X50","1x1","2x1","2x2","3x2","6x2","GE","GMU","Rebrandable"];
+const STATUS = [
+  {k:"implemented", t:"تم التطبيق", close:true, en:"Implemented",
+   reasons:[["Low Stock","نقص مخزون"],["POSM not received","لم تصل مواد الدعاية"],["Without POSM","بدون مواد دعاية"]]},
+  {k:"other_store", t:"تم التطبيق في سوق آخر", close:true, en:"Implemented in another store", reasons:[]},
+  {k:"not_implemented", t:"لم يتم التطبيق", close:false, en:"Not Implemented",
+   reasons:[["Account Restriction","قيود من الأكاونت"],["Contract Issue","مشكلة في العقد"],
+     ["OOS","نفاد المنتج"],["Space Issue","ما فيه مساحة"],
+     ["POSM not received","لم تصل مواد الدعاية"],["Stand not received","الاستاند ما وصل"],
+     ["Stand Damaged","الاستاند دامج"],["Stand Missing","الاستاند مفقود"],
+     ["Store Refused","السوق رفض"],["Store renovation","السوق تحت التجديد"],
+     ["Store Temporarily Closed","السوق مقفل مؤقتاً"],["Store Permanently Closed","السوق مقفل نهائياً"],
+     ["Other","سبب آخر"]]}
+];
+const BRANDS = [["Galaxy","#6D2C7E"],["Twix","#C8992B"],["Snickers","#6B3F17"],["Bounty","#0F5FA6"],
+  ["Mars","#B4121B"],["Maltesers","#8B3E13"],["Extra","#1B7F5A"],["Skittles","#D2196E"]];
+
+let S = {user:null, view:"login", store:null, form:null};
+const subs = [];   // كل ما يُرسل
+const el = id => document.getElementById(id);
+const esc = s => String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const today = () => new Date().toISOString().slice(0,10);
+
+function toast(m){const t=el("toast");t.textContent=m;t.classList.add("show");
+  clearTimeout(t._i);t._i=setTimeout(()=>t.classList.remove("show"),2200);}
+
+function myStores(){
+  if(!S.user) return [];
+  return S.user.role==="me" ? STORES.filter(s=>s.me===S.user.id)
+                            : STORES.filter(s=>s.tl===S.user.id);
+}
+function doneKeys(){return new Set(subs.filter(x=>x.close).map(x=>x.storeId+"|"+x.type+"|"+x.brand));}
+
+/* ---------- الشاشات ---------- */
+function login(){
+  el("who").textContent="";
+  return `<h2>سجّل دخولك</h2>
+  <p class="sub">اكتب رقمك الوظيفي.</p>
+  <input type="text" id="uid" inputmode="numeric" placeholder="الرقم الوظيفي">
+  <button class="btn" onclick="doLogin()">دخول</button>
+  <p class="note">للتجربة: <b>10001</b> أو <b>20001</b></p>`;
+}
+function doLogin(){
+  const v=el("uid").value.trim();
+  if(!v) return toast("اكتب رقمك الوظيفي");
+  if(STORES.some(s=>s.me===v)){ const s=STORES.find(x=>x.me===v);
+    S.user={id:v,role:"me",name:s.men}; }
+  else if(STORES.some(s=>s.tl===v)){ const s=STORES.find(x=>x.tl===v);
+    S.user={id:v,role:"tl",name:s.tln}; }
+  else return toast("الرقم غير موجود");
+  S.view="stores"; render();
+}
+
+function stores(){
+  const list=myStores(), done=doneKeys();
+  el("who").textContent=S.user.name;
+  const sent=subs.length;
+  let h=`<h2>أسواقك</h2><p class="sub">${list.length} سوق · ${sent} إدخال مرسل</p>`;
+  if(S.user.role==="tl"){
+    const by={}; list.forEach(s=>{const k=s.city+" · "+s.acc;(by[k]=by[k]||[]).push(s)});
+    Object.keys(by).sort().forEach(k=>{
+      h+=`<hr><div class="row"><b>${esc(k)}</b><span class="meta">${by[k].length}</span></div>`;
+      by[k].forEach(s=>h+=storeRow(s,done));
+    });
+  } else {
+    list.forEach(s=>h+=storeRow(s,done));
+  }
+  if(!list.length) h=`<div class="empty">ما فيه أسواق مربوطة بهذا الرقم.</div>`;
+  h+=`<button class="btn ghost" onclick="S.view='review';render()">مراجعة المرسل (${sent})</button>
+      <button class="btn ghost" onclick="S.user=null;S.view='login';render()">خروج</button>`;
+  return h;
+}
+function storeRow(s,done){
+  const n=subs.filter(x=>x.storeId===s.id).length;
+  return `<button class="storebtn" onclick="openStore('${s.id}')">
+    <div class="row"><span class="sname">${esc(s.name)}</span>
+    ${n?`<span class="pill ok">${n}</span>`:""}</div>
+    <div class="meta">${esc(s.acc)}${S.user.role==="tl"?" · "+esc(s.men||""):""}</div></button>`;
+}
+function openStore(id){ S.store=STORES.find(s=>s.id===id);
+  S.form={brand:"",type:"",entered:null,inDate:"",implDate:"",status:"",reason:"",note:"",altStore:"",shots:[]};
+  S.view="form"; render(); }
+
+function form(){
+  const s=S.store,f=S.form;
+  const st=STATUS.find(x=>x.k===f.status);
+  let h=`<button class="back" onclick="S.view='stores';render()">→ رجوع لأسواقك</button>
+  <h2>${esc(s.name)}</h2><p class="sub">${esc(s.acc)} · ${esc(s.city)}</p>
+
+  <div class="card">
+    <label class="lbl">البراند</label>
+    <div class="tiles">${BRANDS.map(([b,c])=>`<button class="tile ${f.brand===b?"on":""}" onclick="setF('brand','${b}')">
+      <span class="logo" style="background:${c}">${b[0]}</span><span>${b}</span></button>`).join("")}</div>
+    <label class="lbl">نوع الاستاند</label>
+    <div class="chips">${TYPES.map(t=>`<button class="chip ${f.type===t?"on":""}" onclick="setF('type','${t}')">${t}</button>`).join("")}</div>
+  </div>
+
+  <div class="card">
+    <label class="lbl">دخل الاستاند للسوق؟</label>
+    <div class="seg">
+      <button class="${f.entered===true?"on-yes":""}" onclick="setF('entered',true)">نعم</button>
+      <button class="${f.entered===false?"on-no":""}" onclick="setF('entered',false)">لا</button>
+    </div>`;
+  if(f.entered===true){
+    h+=`<label class="lbl">تاريخ دخول الاستاند</label>
+      <input type="date" value="${f.inDate}" onchange="setF('inDate',this.value)" max="${today()}">`;
+  }
+  h+=`</div>`;
+
+  if(f.entered!==null){
+    h+=`<div class="card"><label class="lbl">الحالة</label>
+      <div class="chips">${STATUS.map(x=>`<button class="chip ${f.status===x.k?"on":""}" onclick="setF('status','${x.k}')">${x.t}</button>`).join("")}</div>`;
+    const cur=STATUS.find(x=>x.k===f.status);
+    if(cur&&cur.reasons.length){
+      h+=`<label class="lbl">كود السبب</label>
+        <div class="chips">${cur.reasons.map(([e,a])=>`<button class="chip ${f.reason===e?"on":""}" onclick="setF('reason','${e}')">${a}</button>`).join("")}</div>`;
+    }
+    if(f.status==="implemented"||f.status==="other_store"){
+      h+=`<label class="lbl">تاريخ التطبيق</label>
+        <input type="date" value="${f.implDate}" onchange="setF('implDate',this.value)" max="${today()}">`;
+    }
+    if(f.status==="other_store"){
+      h+=`<label class="lbl">اسم السوق الفعلي</label>
+        <input type="text" value="${esc(f.altStore)}" oninput="S.form.altStore=this.value" placeholder="السوق اللي انطبق فيه">`;
+    }
+    h+=`<label class="lbl">ملاحظة</label>
+      <textarea oninput="S.form.note=this.value" placeholder="اختياري">${esc(f.note)}</textarea></div>`;
+
+    h+=`<div class="card"><label class="lbl">الصور — وحدة إجبارية والباقي اختياري</label>
+      <div class="shots">
+        ${f.shots.map((src,i)=>`<img class="shot" src="${src}" onclick="rmShot(${i})">`).join("")}
+        <button class="add" onclick="el('cam').click()">+</button>
+      </div>
+      <input id="cam" type="file" accept="image/*" capture="environment" multiple hidden onchange="addShots(this)">
+      </div>`;
+  }
+  const ready=f.brand&&f.type&&f.status&&f.shots.length&&(f.entered!==true||f.inDate)
+    &&(!(f.status==="implemented"||f.status==="other_store")||f.implDate)
+    &&(f.status!=="other_store"||f.altStore.trim())
+    &&(f.status!=="not_implemented"||f.reason);
+  h+=`<button class="btn amber" ${ready?"":"disabled"} onclick="submit()">إرسال</button>`;
+  if(!ready) h+=`<p class="note">أكمل البراند والنوع والحالة وصورة وحدة على الأقل.</p>`;
+  return h;
+}
+function setF(k,v){S.form[k]=v; if(k==="entered"&&v===true&&!S.form.inDate)S.form.inDate=today();
+  if(k==="status"&&(v==="implemented"||v==="other_store")&&!S.form.implDate)S.form.implDate=today(); render();}
+function addShots(inp){
+  [...inp.files].slice(0,4).forEach(f=>{const r=new FileReader();
+    r.onload=e=>{S.form.shots.push(e.target.result);render();};r.readAsDataURL(f);});
+  inp.value="";
+}
+function rmShot(i){S.form.shots.splice(i,1);render();}
+
+function submit(){
+  const f=S.form,s=S.store,st=STATUS.find(x=>x.k===f.status);
+  subs.push({at:new Date().toISOString(),by:S.user.name,byId:S.user.id,
+    storeId:s.id,store:s.name,acc:s.acc,city:s.city,reg:s.reg,
+    brand:f.brand,type:f.type,entered:f.entered,inDate:f.inDate,implDate:f.implDate,
+    status:f.status,statusText:st.t,statusEn:st.en,reason:f.reason,close:!!st.close,altStore:f.altStore,note:f.note,shots:f.shots.length});
+  toast("تم الإرسال"); S.view="stores"; render();
+}
+
+function review(){
+  const mine=subs;
+  const impl=mine.filter(x=>x.status==="implemented").length;
+  const alt=mine.filter(x=>x.status==="other_store").length;
+  let h=`<button class="back" onclick="S.view='stores';render()">→ رجوع</button>
+  <h2>المرسل</h2>
+  <div class="stat"><div><b>${mine.length}</b><span>إجمالي</span></div>
+  <div><b>${impl}</b><span>مطبّق</span></div><div><b>${alt}</b><span>سوق آخر</span></div></div>`;
+  if(!mine.length) return h+`<div class="empty">ما أرسلت شي بعد.</div>`;
+  mine.slice().reverse().forEach(x=>{
+    h+=`<div class="card"><div class="row"><b>${esc(x.store)}</b>
+      <span class="pill ${x.close?"ok":"warn"}">${esc(x.statusText)}</span></div>
+      <div class="meta">${esc(x.brand)} ${esc(x.type)} · ${x.shots} صورة${x.implDate?" · طُبّق "+x.implDate:""}</div>
+      ${x.altStore?`<div class="meta">السوق الفعلي: ${esc(x.altStore)}</div>`:""}
+      ${x.reason?`<div class="meta">${esc(x.reason)}</div>`:""}${x.note?`<div class="meta">${esc(x.note)}</div>`:""}</div>`;
+  });
+  h+=`<button class="btn ghost" onclick="exportCsv()">تصدير CSV</button>`;
+  return h;
+}
+function exportCsv(){
+  const cols=["at","by","storeId","store","acc","city","reg","brand","type","entered","inDate","implDate","statusEn","reason","altStore","note","shots"];
+  const csv="\ufeff"+cols.join(",")+"\n"+subs.map(r=>cols.map(c=>`"${String(r[c]??"").replace(/"/g,'""')}"`).join(",")).join("\n");
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv"}));
+  a.download="activity_submissions.csv"; a.click(); toast("نزل الملف");
+}
+
+function render(){
+  const v={login,stores,form,review}[S.view];
+  el("screen").innerHTML=v();
+  window.scrollTo(0,0);
+}
+render();
+</script>
+</body>
+</html>

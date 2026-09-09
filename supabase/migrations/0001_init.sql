@@ -10,6 +10,9 @@ create table if not exists stores (
   account      text not null,
   city         text,
   region       text,
+  -- Mars' own store number: what activity files are matched on.
+  mars_code    text,
+  -- The retailer's internal number; frequently 0 or free text, so not trusted.
   retailer_no  text,
   me_id        text,
   me_name      text,
@@ -18,6 +21,7 @@ create table if not exists stores (
 );
 
 create index if not exists stores_account_idx on stores (account);
+create index if not exists stores_mars_code_idx on stores (account, mars_code);
 create index if not exists stores_me_idx      on stores (me_id);
 create index if not exists stores_tl_idx      on stores (tl_id);
 

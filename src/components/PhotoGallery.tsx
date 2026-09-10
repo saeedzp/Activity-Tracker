@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { zipSync } from "fflate";
 import { planExport, zipName, type ExportPhoto, type RegionBundle } from "@/lib/photo-export";
-import { formatBytes } from "@/lib/photo";
-import { formatMonthAr } from "@/lib/dates";
+import { formatBytesEn } from "@/lib/photo";
+import { formatMonthEn } from "@/lib/dates";
 
 /**
  * The month's photos: seen here, pulled down one region at a time.
@@ -50,7 +50,7 @@ export function PhotoGallery({
       link.click();
       URL.revokeObjectURL(url);
     } catch {
-      setError("تعذّر تجهيز الملف، حاول مرة ثانية");
+      setError("Could not build the file, try again");
     } finally {
       setBusy("");
       setDone(0);
@@ -60,7 +60,7 @@ export function PhotoGallery({
   if (photos.length === 0) {
     return (
       <p className="rounded-xl border border-[var(--line)] bg-white p-8 text-center text-sm text-[var(--mute)]">
-        ما فيه صور{month ? ` في ${formatMonthAr(month)}` : ""} بعد.
+        No photos{month ? ` in ${formatMonthEn(month)}` : ""} yet.
       </p>
     );
   }
@@ -78,7 +78,7 @@ export function PhotoGallery({
           <header className="mb-3 flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="font-bold">{bundle.region}</h2>
-              <p className="text-xs text-[var(--mute)]">{bundle.files.length} صورة</p>
+              <p className="text-xs text-[var(--mute)]">{bundle.files.length} photos</p>
             </div>
             <button
               type="button"
@@ -87,8 +87,8 @@ export function PhotoGallery({
               className="rounded-lg bg-[var(--ink)] px-4 py-2 text-sm font-bold text-white disabled:opacity-35"
             >
               {busy === bundle.region
-                ? `جارٍ التجهيز ${done}/${bundle.files.length}…`
-                : "تنزيل ZIP"}
+                ? `Preparing ${done}/${bundle.files.length}…`
+                : "Download ZIP"}
             </button>
           </header>
 
@@ -116,9 +116,9 @@ export function PhotoGallery({
       ))}
 
       <p className="text-xs text-[var(--mute)]">
-        داخل الملف: اسم الاكتفيتي ثم المنطقة ثم المدينة، والصورة باسم السوق. فكّ
-        ملفات كل المناطق في مجلد واحد فتتجمّع في شجرة واحدة. الحجم التقريبي لكل
-        صورة {formatBytes(400_000)}.
+        Inside the file: activity, then region, then city, and the photo named
+        after the store. Unzip every region into the same folder and they merge
+        into one tree. About {formatBytesEn(400_000)} per photo.
       </p>
     </div>
   );

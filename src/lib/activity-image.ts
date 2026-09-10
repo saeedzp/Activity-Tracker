@@ -24,10 +24,10 @@ export type ImageCheck =
 export function checkImage(value: unknown): ImageCheck {
   if (value === undefined) return { ok: true, image: null };
   if (value === null || value === "") return { ok: true, image: null };
-  if (typeof value !== "string") return { ok: false, error: "صورة غير صالحة" };
+  if (typeof value !== "string") return { ok: false, error: "Invalid image" };
 
   const image = value.trim();
-  if (!DATA_URL.test(image)) return { ok: false, error: "صورة غير صالحة" };
-  if (image.length > MAX_IMAGE_CHARS) return { ok: false, error: "الصورة كبيرة، اختر صورة أصغر" };
+  if (!DATA_URL.test(image)) return { ok: false, error: "Invalid image" };
+  if (image.length > MAX_IMAGE_CHARS) return { ok: false, error: "Image too large, choose a smaller one" };
   return { ok: true, image };
 }

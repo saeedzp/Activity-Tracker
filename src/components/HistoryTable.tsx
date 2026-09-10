@@ -1,8 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { displayTypeAr, reasonAr, statusAr, type Status } from "@/lib/domain";
-import { formatDateAr, formatMonthAr } from "@/lib/dates";
+import { formatDateEn, formatMonthEn } from "@/lib/dates";
 
 export interface HistoryRow {
   id: string;
@@ -38,11 +37,18 @@ export interface StoreName {
   city: string | null;
 }
 
-/** Every column, in the order the report reads. */
+/**
+ * Every column, in the order the report reads.
+ *
+ * English, and so are the values under them: statuses, reason codes and sizes
+ * are stored in English and shown here exactly as stored, never through their
+ * Arabic labels. The Arabic is for the employee's screen; this table is what
+ * gets exported.
+ */
 const COLUMNS = [
-  "الشهر", "السوق", "الأكاونت", "المدينة", "الاكتفيتي", "البراندات", "المقاس",
-  "دخل الاستاند", "تاريخ الدخول", "الحالة", "السبب", "تفاصيل السبب",
-  "السوق الفعلي", "مواد دعائية", "ضمن الخطة", "الموظف", "تاريخ الإرسال", "الصور",
+  "Month", "Store", "Account", "City", "Activity", "Brands", "Size",
+  "Entered", "Entry date", "Status", "Reason", "Reason detail",
+  "Actual store", "Custom POSM", "In plan", "Employee", "Submitted", "Photos",
 ] as const;
 
 /** The photo cell, so the table and the export agree on which column it is. */
@@ -103,23 +109,23 @@ export function HistoryTable({
   function cells(row: HistoryRow): string[] {
     const store = byId.get(row.store_id);
     return [
-      formatMonthAr(row.month),
+      formatMonthEn(row.month),
       store?.name ?? row.store_id,
       store?.account ?? "",
       store?.city ?? "",
       row.activity_name ?? "—",
       (row.brands ?? []).join(" · "),
-      displayTypeAr(row.display_type),
-      row.entered === null ? "—" : row.entered ? "نعم" : "لا",
-      formatDateAr(row.entry_date ?? row.implementation_date),
-      statusAr(row.status as Status),
-      row.reason_code ? reasonAr(row.reason_code) : "—",
+      row.display_type,
+      row.entered === null ? "—" : row.entered ? "Yes" : "No",
+      formatDateEn(row.entry_date ?? row.implementation_date),
+      row.status,
+      row.reason_code ?? "—",
       row.note ?? "—",
       row.alt_store_name ?? "—",
-      row.custom_posm === null ? "—" : row.custom_posm ? "نعم" : "لا",
-      row.activity_id ? "نعم" : "خارج الخطة",
+      row.custom_posm === null ? "—" : row.custom_posm ? "Yes" : "No",
+      row.activity_id ? "Yes" : "Off plan",
       row.emp_id,
-      formatDateAr(row.submitted_at?.slice(0, 10) ?? null),
+      formatDateEn(row.submitted_at?.slice(0, 10) ?? null),
       // The export carries the addresses, not the pictures: whoever opens the
       // CSV can follow them, and the file stays a file.
       (photosOf.get(row.id) ?? []).map(photoUrl).join(" "),
@@ -152,16 +158,16 @@ export function HistoryTable({
       <form className="mb-4 flex flex-wrap items-end gap-2">
         <input type="hidden" name="tab" value="history" />
         <label className="text-sm">
-          <span className="mb-1 block text-xs text-[var(--mute)]">الشهر</span>
+          <span className="mb-1 block text-xs text-[var(--mute)]">Month</span>
           <select
             name="month"
             defaultValue={month}
             className="rounded-lg border border-[var(--line)] bg-white p-2 text-sm"
           >
-            <option value="">كل الشهور</option>
+            <option value="">All months</option>
             {months.map((m) => (
               <option key={m} value={m}>
-                {formatMonthAr(m)}
+                {formatMonthEn(m)}
               </option>
             ))}
           </select>
@@ -170,12 +176,12 @@ export function HistoryTable({
           type="submit"
           className="rounded-lg border border-[var(--line)] bg-white px-4 py-2 text-sm font-bold"
         >
-          عرض
+          Show
         </button>
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="ابحث بالسوق أو الاكتفيتي أو البراند"
+          placeholder="Search store, activity or brand"
           className="min-w-[220px] flex-1 rounded-lg border border-[var(--line)] bg-white p-2 text-sm"
         />
         <button
@@ -184,13 +190,13 @@ export function HistoryTable({
           disabled={filtered.length === 0}
           className="rounded-lg bg-[var(--ink)] px-4 py-2 text-sm font-bold text-white disabled:opacity-35"
         >
-          تصدير {filtered.length}
+          Export {filtered.length}
         </button>
       </form>
 
       {filtered.length === 0 ? (
         <p className="rounded-xl border border-[var(--line)] bg-white p-8 text-center text-sm text-[var(--mute)]">
-          ما فيه إدخالات{month ? ` في ${formatMonthAr(month)}` : ""} بعد.
+          No submissions{month ? ` in ${formatMonthEn(month)}` : ""} yet.
         </p>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-[var(--line)] bg-white">
@@ -256,7 +262,7 @@ function PhotoCell({ keys }: { keys: string[] }) {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={photoUrl(key)}
-            alt="صورة الإدخال"
+            alt="Submission photo"
             loading="lazy"
             className="h-10 w-10 rounded-md border border-[var(--line)] object-cover"
           />

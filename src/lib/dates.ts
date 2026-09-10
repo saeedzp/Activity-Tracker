@@ -1,5 +1,9 @@
 /**
- * Arabic date display.
+ * Date display, in both languages the app speaks.
+ *
+ * The employee screens are Arabic; the admin screens are English, because what
+ * they produce goes to Mars. So a date has two renderings and neither is a
+ * translation of the other at read time — each is written out here.
  *
  * Dates are stored and exported as ISO, but a merchandiser reading a date on a
  * phone should see the month named the way they say it. Intl's "ar" locale
@@ -42,4 +46,29 @@ export function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-export { MONTHS_AR };
+const MONTHS_EN = [
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+] as const;
+
+/** "2026-09-09" -> "9 Sep 2026". */
+export function formatDateEn(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso.trim());
+  if (!match) return iso;
+  const [, year, month, day] = match;
+  const name = MONTHS_EN[Number(month) - 1];
+  return name ? `${Number(day)} ${name} ${year}` : iso;
+}
+
+/** "2026-09" -> "Sep 2026", for the month pickers on the admin screens. */
+export function formatMonthEn(value: string | null | undefined): string {
+  if (!value) return "—";
+  const match = /^(\d{4})-(\d{2})$/.exec(value.trim());
+  if (!match) return value;
+  const [, year, month] = match;
+  const name = MONTHS_EN[Number(month) - 1];
+  return name ? `${name} ${year}` : value;
+}
+
+export { MONTHS_AR, MONTHS_EN };

@@ -18,13 +18,13 @@ export const runtime = "edge";
  */
 export async function POST(request: Request) {
   if (!(await isAdmin())) {
-    return NextResponse.json({ error: "يلزم الرقم السري" }, { status: 401 });
+    return NextResponse.json({ error: "Passcode required" }, { status: 401 });
   }
 
   const form = await request.formData().catch(() => null);
   const file = form?.get("file");
   if (!(file instanceof File)) {
-    return NextResponse.json({ error: "اختر ملف الروت" }, { status: 400 });
+    return NextResponse.json({ error: "Choose the route file" }, { status: 400 });
   }
 
   let incoming: StoreRecordRow[];
@@ -32,13 +32,13 @@ export async function POST(request: Request) {
     incoming = parseRouteFile(file.name, new Uint8Array(await file.arrayBuffer()));
   } catch {
     return NextResponse.json(
-      { error: "تعذّرت قراءة الملف. تأكد إنه xlsx أو csv بنفس الأعمدة." },
+      { error: "Could not read the file. Check it is an xlsx or csv with the same columns." },
       { status: 400 },
     );
   }
   if (incoming.length === 0) {
     return NextResponse.json(
-      { error: "ما فيه صفوف صالحة. تأكد إن عمود STORE ID موجود ومعبّى." },
+      { error: "No usable rows. Check the STORE ID column is present and filled." },
       { status: 400 },
     );
   }

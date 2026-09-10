@@ -45,12 +45,12 @@ export function RouteUploader({
       const res = await fetch("/api/route/apply", { method: "POST", body: form });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "تعذّر التحديث");
+        setError(data.error ?? "Could not update the route");
         return;
       }
       setResult(data);
     } catch {
-      setError("تعذّر الاتصال");
+      setError("Could not connect");
     } finally {
       setBusy(false);
     }
@@ -59,8 +59,8 @@ export function RouteUploader({
   return (
     <div>
       <p className="mb-4 text-sm text-[var(--mute)]">
-        محفوظ الآن: <b className="text-[var(--ink)]">{storeCount}</b> سوق ·{" "}
-        <b className="text-[var(--ink)]">{userCount}</b> موظف
+        Currently stored: <b className="text-[var(--ink)]">{storeCount}</b> stores ·{" "}
+        <b className="text-[var(--ink)]">{userCount}</b> employees
       </p>
 
       <div
@@ -81,9 +81,9 @@ export function RouteUploader({
         } ${busy ? "opacity-60" : ""}`}
       >
         <span className="text-3xl">⬆</span>
-        <b className="mt-2 block">{busy ? "جارٍ التحديث…" : "اسحب ملف الروت هنا"}</b>
+        <b className="mt-2 block">{busy ? "Updating…" : "Drop the route file here"}</b>
         <span className="mt-1 block text-sm text-[var(--mute)]">
-          أو اضغط للاختيار · xlsx أو csv
+          or click to choose · xlsx or csv
         </span>
       </div>
 
@@ -107,26 +107,28 @@ export function RouteUploader({
 
       {result && (
         <div className="mt-4 rounded-xl border border-[var(--ok)] bg-[var(--ok-soft)] p-4">
-          <h2 className="font-bold text-[var(--ok)]">تم تحديث الروت</h2>
+          <h2 className="font-bold text-[var(--ok)]">Route updated</h2>
           <p className="mt-1 text-sm">
-            {result.file} · <b>{result.stores}</b> سوق · <b>{result.users}</b> موظف
+            {result.file} · <b>{result.stores}</b> stores · <b>{result.users}</b> employees
           </p>
 
           <div className="mt-3 flex flex-wrap gap-2 text-sm">
-            <Tally label="جديد" value={result.added} />
-            <Tally label="تغيّر" value={result.changed} />
-            <Tally label="بدون تغيير" value={result.unchanged} />
-            {result.newUsers > 0 && <Tally label="موظف جديد" value={result.newUsers} />}
+            <Tally label="New" value={result.added} />
+            <Tally label="Changed" value={result.changed} />
+            <Tally label="Unchanged" value={result.unchanged} />
+            {result.newUsers > 0 && <Tally label="New employees" value={result.newUsers} />}
           </div>
 
           {result.deactivated > 0 && (
             <div className="mt-3 rounded-lg border border-[var(--warn)] bg-white p-3">
               <b className="text-sm text-[var(--warn)]">
-                {result.deactivated} سوق تم تعطيله — غير موجود في الملف
+                {result.deactivated} stores switched off — not in the file
               </b>
               <p className="mt-1 text-xs text-[var(--mute)]">
-                اختفى من قوائم الموظفين. إدخالاته السابقة باقية، ويرجع تلقائياً لو
-                ظهر في ملف قادم. لو العدد أكبر من المتوقع، الملف ناقص — ارفع الكامل.
+                Gone from the employees&apos; lists. Past submissions stay, and a
+                store returns automatically if it appears in a later file. If this
+                number is higher than expected the file is incomplete — upload the
+                full one.
               </p>
               <ul className="mt-2 space-y-0.5">
                 {result.deactivatedNames.map((name) => (
@@ -136,7 +138,7 @@ export function RouteUploader({
                 ))}
                 {result.deactivated > result.deactivatedNames.length && (
                   <li className="text-xs text-[var(--mute)]">
-                    و{result.deactivated - result.deactivatedNames.length} غيرها…
+                    and {result.deactivated - result.deactivatedNames.length} more…
                   </li>
                 )}
               </ul>
@@ -146,8 +148,9 @@ export function RouteUploader({
       )}
 
       <p className="mt-4 text-xs text-[var(--mute)]">
-        الملف هو الروت: كل سوق فيه يُحفظ، وأي سوق غير موجود فيه يُعطَّل.
-        الربط بـ STORE ID، فتغيير اسم السوق يُحدَّث ولا يُنشئ سوقاً جديداً.
+        The file is the route: every store in it is saved, and any store missing
+        from it is switched off. Matched on STORE ID, so a renamed store is
+        updated rather than created again.
       </p>
     </div>
   );

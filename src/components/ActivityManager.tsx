@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { formatMonthAr } from "@/lib/dates";
+import { formatMonthEn } from "@/lib/dates";
 import { preparePhoto, THUMB_QUALITY, THUMB_WIDTH } from "@/lib/photo";
 
 export interface ActivityRow {
@@ -17,7 +17,7 @@ export interface ActivityRow {
 /**
  * The month's campaigns.
  *
- * An activity is a campaign — "العودة للمدارس" — and the brands it carries.
+ * An activity is a campaign — "Back to School" — and the brands it carries.
  * The size it arrives on is not planned here: the employee reports the size
  * actually delivered, which is not always the size intended.
  */
@@ -66,13 +66,13 @@ export function ActivityManager({
       const prepared = await preparePhoto(file, THUMB_WIDTH, THUMB_QUALITY);
       setImage(prepared.dataUrl);
     } catch {
-      setError("تعذّرت معالجة الصورة، جرّب صورة ثانية");
+      setError("Could not process that image, try another");
     }
   }
 
   async function save() {
-    if (!name.trim()) return setError("اكتب اسم الاكتفيتي");
-    if (brands.length === 0) return setError("أضف براند واحد على الأقل");
+    if (!name.trim()) return setError("Enter the activity name");
+    if (brands.length === 0) return setError("Add at least one brand");
     setBusy(true);
     setError("");
     try {
@@ -88,7 +88,7 @@ export function ActivityManager({
         }),
       });
       const data = await res.json();
-      if (!res.ok) return setError(data.error ?? "تعذّر الحفظ");
+      if (!res.ok) return setError(data.error ?? "Could not save");
       setRows((prev) =>
         [...prev.filter((r) => r.id !== data.activity.id), data.activity].sort(
           (a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name, "ar"),
@@ -96,7 +96,7 @@ export function ActivityManager({
       );
       clear();
     } catch {
-      setError("تعذّر الاتصال");
+      setError("Could not connect");
     } finally {
       setBusy(false);
     }
@@ -114,13 +114,14 @@ export function ActivityManager({
   return (
     <div className="grid gap-6 md:grid-cols-[340px_1fr]">
       <section className="rounded-xl border border-[var(--line)] bg-white p-4">
-        <h2 className="mb-1 font-bold">{editing ? "تعديل اكتفيتي" : "إضافة اكتفيتي"}</h2>
+        <h2 className="mb-1 font-bold">{editing ? "Edit activity" : "Add activity"}</h2>
         <p className="mb-4 text-xs text-[var(--mute)]">
-          اسم الحملة والبراندات اللي تحملها. المقاس يختاره الموظف حسب اللي وصل فعلاً.
+          The campaign name and the brands it carries. The size is not planned
+          here: the employee reports the one that actually arrived.
         </p>
 
         <label className="mb-3 block">
-          <span className="mb-1 block text-xs text-[var(--mute)]">اسم الاكتفيتي</span>
+          <span className="mb-1 block text-xs text-[var(--mute)]">Activity name</span>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -129,12 +130,13 @@ export function ActivityManager({
             className="w-full rounded-lg border border-[var(--line)] p-2.5 text-sm"
           />
           <span className="mt-1 block text-[11px] text-[var(--mute)]">
-            بالإنجليزي كما يصل من مارس — الاسم يروح للتصدير ويصير مجلد الصور.
+            As Mars sends it. This name goes into the export and becomes the
+            photo folder.
           </span>
         </label>
 
         <label className="mb-2 block">
-          <span className="mb-1 block text-xs text-[var(--mute)]">البراندات</span>
+          <span className="mb-1 block text-xs text-[var(--mute)]">Brands</span>
           <div className="flex gap-2">
             <input
               value={brandDraft}
@@ -145,7 +147,7 @@ export function ActivityManager({
                   addBrand();
                 }
               }}
-              placeholder="تويكس ثم Enter"
+              placeholder="Twix, then Enter"
               className="w-full rounded-lg border border-[var(--line)] p-2.5 text-sm"
             />
             <button
@@ -169,7 +171,7 @@ export function ActivityManager({
                 <button
                   type="button"
                   onClick={() => setBrands(brands.filter((x) => x !== b))}
-                  aria-label={`حذف ${b}`}
+                  aria-label={`Remove ${b}`}
                   className="opacity-70"
                 >
                   ✕
@@ -180,7 +182,7 @@ export function ActivityManager({
         )}
 
         <div className="mb-3">
-          <span className="mb-1 block text-xs text-[var(--mute)]">صورة الاكتفيتي (اختياري)</span>
+          <span className="mb-1 block text-xs text-[var(--mute)]">Activity photo (optional)</span>
           <div className="flex items-center gap-3">
             {image ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -191,7 +193,7 @@ export function ActivityManager({
               />
             ) : (
               <div className="grid h-16 w-16 flex-none place-items-center rounded-lg border border-dashed border-[var(--line)] text-[10px] text-[var(--mute)]">
-                بلا صورة
+                No photo
               </div>
             )}
             <div className="flex flex-col gap-1.5">
@@ -200,7 +202,7 @@ export function ActivityManager({
                 onClick={() => imageInput.current?.click()}
                 className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-xs font-bold"
               >
-                {image ? "تغيير الصورة" : "اختر صورة"}
+                {image ? "Change photo" : "Choose photo"}
               </button>
               {image && (
                 <button
@@ -211,7 +213,7 @@ export function ActivityManager({
                   }}
                   className="text-xs text-[var(--warn)] underline"
                 >
-                  إزالة
+                  Remove
                 </button>
               )}
             </div>
@@ -224,7 +226,8 @@ export function ActivityManager({
             onChange={(e) => chooseImage(e.target.files?.[0])}
           />
           <p className="mt-1.5 text-[11px] text-[var(--mute)]">
-            تُصغَّر الصورة تلقائياً قبل الحفظ، فيميّزها الموظف بلا تحميل ثقيل.
+            Shrunk automatically before saving, so the employee can tell the
+            campaigns apart without a heavy download.
           </p>
         </div>
 
@@ -240,7 +243,7 @@ export function ActivityManager({
           disabled={busy}
           className="mt-3 w-full rounded-xl bg-[var(--ink)] p-3 font-bold text-white disabled:opacity-35"
         >
-          {busy ? "…" : editing ? "حفظ التعديل" : "إضافة"}
+          {busy ? "…" : editing ? "Save changes" : "Add"}
         </button>
         {editing && (
           <button
@@ -248,19 +251,19 @@ export function ActivityManager({
             onClick={clear}
             className="mt-2 w-full rounded-xl border border-[var(--line)] p-3 text-sm font-bold"
           >
-            إلغاء
+            Cancel
           </button>
         )}
       </section>
 
       <section>
         <h2 className="mb-3 font-bold">
-          اكتفيتي {formatMonthAr(month)} ({live.length})
+          {formatMonthEn(month)} ({live.length})
         </h2>
 
         {rows.length === 0 ? (
           <p className="rounded-xl border border-[var(--line)] bg-white p-8 text-center text-sm text-[var(--mute)]">
-            ما فيه اكتفيتي لهذا الشهر. أضف أول واحد من اليمين.
+            No activities for this month yet. Add the first one on the left.
           </p>
         ) : (
           <ul className="space-y-2">
@@ -306,7 +309,7 @@ export function ActivityManager({
                       }}
                       className="text-[var(--mute)] underline"
                     >
-                      تعديل
+                      Edit
                     </button>
                     {r.active && (
                       <button
@@ -314,7 +317,7 @@ export function ActivityManager({
                         onClick={() => hide(r.id)}
                         className="text-[var(--warn)] underline"
                       >
-                        إخفاء
+                        Hide
                       </button>
                     )}
                   </div>
@@ -325,7 +328,8 @@ export function ActivityManager({
         )}
 
         <p className="mt-4 text-xs text-[var(--mute)]">
-          الإخفاء لا يحذف — الإدخالات السابقة تشير للاكتفيتي والسجل يحتاجه.
+          Hiding does not delete: past submissions point at the activity and
+          the history still needs it.
         </p>
       </section>
     </div>

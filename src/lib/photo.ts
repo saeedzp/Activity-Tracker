@@ -77,8 +77,16 @@ export async function preparePhoto(
   };
 }
 
+/** Arabic units: this is read on the employee's screen. */
 export function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} ب`;
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} ك.ب`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} م.ب`;
+}
+
+/** The same, for the admin screens. */
+export function formatBytesEn(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }

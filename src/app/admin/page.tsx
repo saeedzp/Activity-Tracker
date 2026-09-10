@@ -26,7 +26,11 @@ const HISTORY_SELECT =
   " custom_posm, activity_id, submitted_at, approved";
 
 /**
- * All three admin jobs behind one address.
+ * Every admin job behind one address.
+ *
+ * These screens are in English while the employee screens are in Arabic: what
+ * the admin produces — the CSV, the photo folders — is read by Mars, so the
+ * words on the screen are the words in the file.
  *
  * The tab is a URL parameter and each panel is rendered on the server, so only
  * the data for the open tab is fetched — a year of history is not loaded to
@@ -47,7 +51,7 @@ export default async function AdminPage({
   const db = serviceClient();
 
   return (
-    <main className="mx-auto max-w-[1500px] p-4">
+    <main dir="ltr" className="mx-auto max-w-[1500px] p-4">
       <AdminTabs active={tab} />
       {tab === "activities" && (
         <ActivitiesPanel db={db} month={requestedMonth?.trim() || monthOf(new Date())} />
@@ -73,7 +77,7 @@ async function ActivitiesPanel({ db, month }: { db: Db; month: string }) {
 
   return (
     <>
-      <PanelHead title="الاكتفيتي" note="حملات الشهر والبراندات اللي تحملها.">
+      <PanelHead title="Activities" note="This month's campaigns and the brands they carry.">
         <MonthPicker month={month} tab="activities" />
       </PanelHead>
       <ActivityManager month={month} initial={(data ?? []) as unknown as ActivityRow[]} />
@@ -89,7 +93,7 @@ async function RoutePanel({ db }: { db: Db }) {
 
   return (
     <>
-      <PanelHead title="الروت" note="ارفع ملف الأسواق فيستبدل الروت بالكامل." />
+      <PanelHead title="Route" note="Upload the store file to replace the whole route." />
       <RouteUploader storeCount={stores.count ?? 0} userCount={users.count ?? 0} />
     </>
   );
@@ -122,7 +126,7 @@ async function HistoryPanel({ db, month }: { db: Db; month: string }) {
 
   return (
     <>
-      <PanelHead title="السجل" note="كل إدخال بكامل تفاصيله، جاهز للتصدير." />
+      <PanelHead title="History" note="Every submission in full, ready to export." />
       <HistoryTable
         rows={(rows.data ?? []) as unknown as HistoryRow[]}
         stores={(stores.data ?? []) as unknown as StoreName[]}
@@ -190,7 +194,7 @@ async function PhotosPanel({ db, month }: { db: Db; month: string }) {
 
   return (
     <>
-      <PanelHead title="الصور" note="صور الشهر مرتبة بالمنطقة، وتنزيل كل منطقة على حدة.">
+      <PanelHead title="Photos" note="This month's photos by region, downloaded one region at a time.">
         <MonthPicker month={month} tab="photos" />
       </PanelHead>
       <PhotoGallery photos={list} month={month} />
@@ -213,7 +217,7 @@ function PanelHead({
         <h1 className="text-xl font-bold">{title}</h1>
         <p className="text-sm text-[var(--mute)]">{note}</p>
       </div>
-      {children && <div className="mr-auto">{children}</div>}
+      {children && <div className="ms-auto">{children}</div>}
     </header>
   );
 }
@@ -223,7 +227,7 @@ function MonthPicker({ month, tab }: { month: string; tab: TabKey }) {
     <form className="flex items-center gap-2 text-sm">
       <input type="hidden" name="tab" value={tab} />
       <label htmlFor="month" className="text-[var(--mute)]">
-        الشهر
+        Month
       </label>
       <input
         id="month"
@@ -236,7 +240,7 @@ function MonthPicker({ month, tab }: { month: string; tab: TabKey }) {
         type="submit"
         className="rounded-lg border border-[var(--line)] bg-white px-3 py-1.5 font-bold"
       >
-        عرض
+        Show
       </button>
     </form>
   );

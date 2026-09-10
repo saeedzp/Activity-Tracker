@@ -188,15 +188,16 @@ export function isNoOp(diff: RouteDiff): boolean {
   );
 }
 
-export const FIELD_AR: Record<TrackedField, string> = {
-  name: "اسم السوق",
-  account: "الأكاونت",
-  city: "المدينة",
-  region: "المنطقة",
-  mars_code: "كود مارس",
-  retailer_no: "رقم السوق",
-  me_id: "رقم الموظف",
-  me_name: "اسم الموظف",
-  tl_id: "رقم المشرف",
-  tl_name: "اسم المشرف",
+/** Read on the admin screens, which are English. */
+export const FIELD_LABELS: Record<TrackedField, string> = {
+  name: "Store name",
+  account: "Account",
+  city: "City",
+  region: "Region",
+  mars_code: "Mars code",
+  retailer_no: "Store no.",
+  me_id: "Employee no.",
+  me_name: "Employee name",
+  tl_id: "Supervisor no.",
+  tl_name: "Supervisor name",
 };

@@ -12,7 +12,7 @@ export const runtime = "edge";
 
 export async function POST(request: Request) {
   if (!(await passcodeConfigured())) {
-    return NextResponse.json({ error: "الرقم السري غير مضبوط" }, { status: 503 });
+    return NextResponse.json({ error: "The passcode is not configured" }, { status: 503 });
   }
 
   const body = await request.json().catch(() => null);
@@ -20,12 +20,12 @@ export async function POST(request: Request) {
   if (!(await checkPasscode(given))) {
     // A short pause blunts guessing without making a correct entry feel slow.
     await new Promise((resolve) => setTimeout(resolve, 600));
-    return NextResponse.json({ error: "الرقم السري غير صحيح" }, { status: 401 });
+    return NextResponse.json({ error: "Wrong passcode" }, { status: 401 });
   }
 
   const cookieValue = await adminCookieValue();
   if (!cookieValue) {
-    return NextResponse.json({ error: "الإعداد غير مكتمل" }, { status: 503 });
+    return NextResponse.json({ error: "Setup incomplete" }, { status: 503 });
   }
 
   const response = NextResponse.json({ ok: true });

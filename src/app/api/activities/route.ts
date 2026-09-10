@@ -11,11 +11,11 @@ const SELECT = "id, month, name, brands, image, active, sort_order";
 /** The campaigns planned for one month. */
 export async function GET(request: Request) {
   if (!(await isAdmin())) {
-    return NextResponse.json({ error: "يلزم الرقم السري" }, { status: 401 });
+    return NextResponse.json({ error: "Passcode required" }, { status: 401 });
   }
 
   const month = new URL(request.url).searchParams.get("month")?.trim();
-  if (!month) return NextResponse.json({ error: "اختر الشهر" }, { status: 400 });
+  if (!month) return NextResponse.json({ error: "Choose the month" }, { status: 400 });
 
   const db = serviceClient();
   const { data, error } = await db
@@ -32,7 +32,7 @@ export async function GET(request: Request) {
 /** Add a campaign, or edit one by id. */
 export async function POST(request: Request) {
   if (!(await isAdmin())) {
-    return NextResponse.json({ error: "يلزم الرقم السري" }, { status: 401 });
+    return NextResponse.json({ error: "Passcode required" }, { status: 401 });
   }
 
   const body = await request.json().catch(() => null);
@@ -40,9 +40,9 @@ export async function POST(request: Request) {
   const name = String(body?.name ?? "").trim();
 
   if (!/^\d{4}-\d{2}$/.test(month)) {
-    return NextResponse.json({ error: "اختر الشهر" }, { status: 400 });
+    return NextResponse.json({ error: "Choose the month" }, { status: 400 });
   }
-  if (!name) return NextResponse.json({ error: "اكتب اسم الاكتفيتي" }, { status: 400 });
+  if (!name) return NextResponse.json({ error: "Enter the activity name" }, { status: 400 });
 
   // One campaign can carry several brands, and duplicates in the list are just
   // noise from typing.
@@ -50,7 +50,7 @@ export async function POST(request: Request) {
     ? [...new Set(body.brands.map((b: unknown) => String(b).trim()).filter(Boolean))]
     : [];
   if (brands.length === 0) {
-    return NextResponse.json({ error: "أضف براند واحد على الأقل" }, { status: 400 });
+    return NextResponse.json({ error: "Add at least one brand" }, { status: 400 });
   }
 
   // Checked here and not only in the browser: the picture goes into a column
@@ -79,11 +79,11 @@ export async function POST(request: Request) {
 
 export async function DELETE(request: Request) {
   if (!(await isAdmin())) {
-    return NextResponse.json({ error: "يلزم الرقم السري" }, { status: 401 });
+    return NextResponse.json({ error: "Passcode required" }, { status: 401 });
   }
 
   const id = new URL(request.url).searchParams.get("id");
-  if (!id) return NextResponse.json({ error: "id مطلوب" }, { status: 400 });
+  if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
 
   const db = serviceClient();
   // Hidden rather than deleted: submissions reference it and the history has to

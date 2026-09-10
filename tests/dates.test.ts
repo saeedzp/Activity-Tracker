@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { formatDateAr, formatMonthAr, monthOf, MONTHS_AR } from "@/lib/dates";
+import {
+  formatDateAr,
+  formatDateEn,
+  formatMonthAr,
+  formatMonthEn,
+  monthOf,
+  MONTHS_AR,
+} from "@/lib/dates";
 
 describe("formatDateAr", () => {
   it("names the month the way it is said in Saudi usage", () => {
@@ -48,5 +55,18 @@ describe("monthOf", () => {
 
   it("pads a single-digit month", () => {
     expect(monthOf(new Date("2026-03-15T00:00:00Z"))).toBe("2026-03");
+  });
+});
+
+describe("English dates, for the admin screens", () => {
+  it("names the month in English", () => {
+    expect(formatDateEn("2026-09-09")).toBe("9 Sep 2026");
+    expect(formatMonthEn("2026-09")).toBe("Sep 2026");
+  });
+
+  it("says nothing rather than guessing", () => {
+    expect(formatDateEn(null)).toBe("—");
+    expect(formatMonthEn("")).toBe("—");
+    expect(formatDateEn("not a date")).toBe("not a date");
   });
 });

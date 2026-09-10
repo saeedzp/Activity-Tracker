@@ -1,6 +1,10 @@
 /**
  * The admin tabs.
  *
+ * English, like the rest of the admin screens: what they produce — the export,
+ * the photo folders — goes to Mars, so the words on screen match the words in
+ * the file. The employee screens stay Arabic.
+ *
  * Plain module on purpose. Defining these inside the client component and
  * importing them into the server page looks fine and type-checks, but Next
  * replaces a "use client" module with a reference proxy on the server, so the
@@ -10,10 +14,10 @@
 export type TabKey = "activities" | "route" | "history" | "photos";
 
 export const TABS: { key: TabKey; label: string }[] = [
-  { key: "activities", label: "الاكتفيتي" },
-  { key: "route", label: "الروت" },
-  { key: "history", label: "السجل" },
-  { key: "photos", label: "الصور" },
+  { key: "activities", label: "Activities" },
+  { key: "route", label: "Route" },
+  { key: "history", label: "History" },
+  { key: "photos", label: "Photos" },
 ];
 
 export function tabOf(value: string | undefined): TabKey {

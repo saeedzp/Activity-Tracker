@@ -32,12 +32,12 @@ export function AdminTabs({ active }: { active: TabKey }) {
             </a>
           );
         })}
-        <div className="mr-auto flex items-center gap-3 pb-2">
+        <div className="ms-auto flex items-center gap-3 pb-2">
           <a href="/stores" className="text-xs text-[var(--mute)] underline">
-            شاشة الموظف
+            Employee app
           </a>
           <button type="button" onClick={lock} className="text-xs text-[var(--mute)] underline">
-            قفل الإدارة
+            Lock admin
           </button>
         </div>
       </div>

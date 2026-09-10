@@ -12,7 +12,7 @@ export function AdminLogin({ next }: { next: string }) {
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (!passcode.trim()) return setError("اكتب الرقم السري");
+    if (!passcode.trim()) return setError("Enter the passcode");
     setBusy(true);
     setError("");
     try {
@@ -23,27 +23,27 @@ export function AdminLogin({ next }: { next: string }) {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "تعذّر الدخول");
+        setError(data.error ?? "Could not sign in");
         return;
       }
       router.push(next);
       router.refresh();
     } catch {
-      setError("تعذّر الاتصال");
+      setError("Could not connect");
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-[420px] flex-col justify-center p-5">
+    <main dir="ltr" className="mx-auto flex min-h-dvh max-w-[420px] flex-col justify-center p-5">
       <div className="mb-6 flex flex-col items-center gap-3">
         <Logo size={56} />
-        <span className="font-bold">شاشات الإدارة</span>
+        <span className="font-bold">Admin</span>
       </div>
 
       <form onSubmit={submit}>
-        <label className="mb-1.5 block text-sm text-[var(--mute)]">الرقم السري</label>
+        <label className="mb-1.5 block text-sm text-[var(--mute)]">Passcode</label>
         <input
           type="password"
           inputMode="numeric"
@@ -62,12 +62,12 @@ export function AdminLogin({ next }: { next: string }) {
           disabled={busy}
           className="mt-4 w-full rounded-xl bg-[var(--ink)] p-3.5 font-bold text-white disabled:opacity-35"
         >
-          {busy ? "لحظة…" : "دخول"}
+          {busy ? "…" : "Sign in"}
         </button>
       </form>
 
       <a href="/stores" className="mt-6 text-center text-sm text-[var(--mute)] underline">
-        رجوع لشاشة الموظف
+        Back to the employee app
       </a>
     </main>
   );

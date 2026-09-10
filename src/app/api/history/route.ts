@@ -19,7 +19,7 @@ const SELECT =
  */
 export async function GET(request: Request) {
   if (!(await isAdmin())) {
-    return NextResponse.json({ error: "يلزم الرقم السري" }, { status: 401 });
+    return NextResponse.json({ error: "Passcode required" }, { status: 401 });
   }
 
   const url = new URL(request.url);

@@ -10,7 +10,7 @@ export interface HistoryRow {
   store_id: string;
   emp_id: string;
   activity_name: string | null;
-  brands: string[];
+  brands: string[] | null;
   display_type: string;
   entered: boolean | null;
   entry_date: string | null;
@@ -21,14 +21,14 @@ export interface HistoryRow {
   note: string | null;
   custom_posm: boolean | null;
   activity_id: string | null;
-  submitted_at: string;
+  submitted_at: string | null;
   approved: boolean;
 }
 
 export interface StoreName {
   id: string;
-  name: string;
-  account: string;
+  name: string | null;
+  account: string | null;
   city: string | null;
 }
 
@@ -59,16 +59,23 @@ export function HistoryTable({
     return rows.filter((r) => {
       const store = byId.get(r.store_id);
       return (
-        store?.name.toLowerCase().includes(q) ||
+        (store?.name ?? "").toLowerCase().includes(q) ||
         r.store_id.toLowerCase().includes(q) ||
         (r.activity_name ?? "").toLowerCase().includes(q) ||
-        r.brands.some((b) => b.toLowerCase().includes(q)) ||
+        (r.brands ?? []).some((b) => b.toLowerCase().includes(q)) ||
         (store?.city ?? "").toLowerCase().includes(q)
       );
     });
   }, [rows, query, byId]);
 
-  /** One row per column, in the same order the table shows. */
+  /**
+   * One row per column, in the same order the table shows.
+   *
+   * Every field is read defensively. The history reaches back over rows
+   * written by older versions of the app, and one row from before a column
+   * existed used to throw while rendering — which takes down the whole admin
+   * page, not just that line. A blank cell beats a 500.
+   */
   function cells(row: HistoryRow): string[] {
     const store = byId.get(row.store_id);
     return [
@@ -77,7 +84,7 @@ export function HistoryTable({
       store?.account ?? "",
       store?.city ?? "",
       row.activity_name ?? "—",
-      row.brands.join(" · "),
+      (row.brands ?? []).join(" · "),
       displayTypeAr(row.display_type),
       row.entered === null ? "—" : row.entered ? "نعم" : "لا",
       formatDateAr(row.entry_date ?? row.implementation_date),
@@ -88,7 +95,7 @@ export function HistoryTable({
       row.custom_posm === null ? "—" : row.custom_posm ? "نعم" : "لا",
       row.activity_id ? "نعم" : "خارج الخطة",
       row.emp_id,
-      formatDateAr(row.submitted_at.slice(0, 10)),
+      formatDateAr(row.submitted_at?.slice(0, 10) ?? null),
     ];
   }
 

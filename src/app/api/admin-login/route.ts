@@ -3,19 +3,16 @@ import {
   ADMIN_COOKIE,
   ADMIN_MAX_AGE,
   adminCookieValue,
-  adminPasscode,
   checkPasscode,
+  passcodeConfigured,
 } from "@/lib/admin";
 
 // Cloudflare Pages runs every route on the edge runtime.
 export const runtime = "edge";
 
 export async function POST(request: Request) {
-  if (!adminPasscode()) {
-    return NextResponse.json(
-      { error: "الرقم السري غير مضبوط على الاستضافة (ADMIN_PASSCODE)" },
-      { status: 503 },
-    );
+  if (!(await passcodeConfigured())) {
+    return NextResponse.json({ error: "الرقم السري غير مضبوط" }, { status: 503 });
   }
 
   const body = await request.json().catch(() => null);
@@ -26,8 +23,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "الرقم السري غير صحيح" }, { status: 401 });
   }
 
+  const cookieValue = await adminCookieValue();
+  if (!cookieValue) {
+    return NextResponse.json({ error: "الإعداد غير مكتمل" }, { status: 503 });
+  }
+
   const response = NextResponse.json({ ok: true });
-  response.cookies.set(ADMIN_COOKIE, await adminCookieValue(), {
+  response.cookies.set(ADMIN_COOKIE, cookieValue, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",

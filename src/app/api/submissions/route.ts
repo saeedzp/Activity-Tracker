@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { serviceClient } from "@/lib/supabase";
 import { currentSession } from "@/lib/session";
 import { monthOf } from "@/lib/dates";
+import { isPhotoKey, MAX_PHOTOS } from "@/lib/photo-key";
 import {
   asksCustomPosm,
   STATUSES,
@@ -54,6 +55,23 @@ export async function POST(request: Request) {
   const note = body?.note ? String(body.note).trim() : null;
   if (reasonCode === "Other" && !note) {
     return NextResponse.json({ error: "اكتب السبب" }, { status: 400 });
+  }
+
+  // Photos are uploaded first and claimed here by key. Checked rather than
+  // trusted: a key is a path, and these are rendered back to whoever reads the
+  // history.
+  const keys = Array.isArray(body?.photos) ? body.photos : [];
+  if (keys.length > MAX_PHOTOS) {
+    return NextResponse.json({ error: `أقصى عدد صور ${MAX_PHOTOS}` }, { status: 400 });
+  }
+  if (!keys.every(isPhotoKey)) {
+    return NextResponse.json({ error: "صورة غير صالحة" }, { status: 400 });
+  }
+  // The one status that claims something happened is the one that owes proof,
+  // and the rule belongs here rather than only in the form: the form is a
+  // convenience, this route is the record.
+  if (status === "Implemented" && keys.length === 0) {
+    return NextResponse.json({ error: "أضف صورة واحدة على الأقل" }, { status: 400 });
   }
 
   const db = serviceClient();
@@ -111,6 +129,16 @@ export async function POST(request: Request) {
   if (error) {
     console.error("submission insert failed:", error.message);
     return NextResponse.json({ error: "تعذّر الحفظ، حاول مرة ثانية" }, { status: 500 });
+  }
+
+  if (keys.length > 0) {
+    // The submission is already saved. A photo row that fails to write leaves
+    // the object in the bucket and the report intact, which is far better than
+    // refusing a submission the employee has already made.
+    const { error: photoError } = await db
+      .from("photos")
+      .insert(keys.map((r2_key: string) => ({ submission_id: data.id, r2_key })));
+    if (photoError) console.error("photo rows failed:", photoError.message);
   }
 
   return NextResponse.json({

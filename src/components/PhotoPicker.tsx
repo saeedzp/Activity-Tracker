@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { formatBytes, preparePhoto, type PreparedPhoto } from "@/lib/photo";
+import { MAX_PHOTOS } from "@/lib/photo-key";
 
 /**
  * Camera-first photo picker.
@@ -33,8 +34,16 @@ export function PhotoPicker({
         if (!file.type.startsWith("image/")) continue;
         prepared.push(await preparePhoto(file));
       }
-      if (prepared.length) onChange([...photos, ...prepared]);
-      else setError("اختر صورة");
+      if (!prepared.length) return setError("اختر صورة");
+      // A cap the employee can see, rather than an upload refused later: four
+      // angles are evidence, forty are a bill.
+      const next = [...photos, ...prepared];
+      if (next.length > MAX_PHOTOS) {
+        setError(`أقصى عدد صور ${MAX_PHOTOS}`);
+        onChange(next.slice(0, MAX_PHOTOS));
+        return;
+      }
+      onChange(next);
     } catch {
       setError("تعذّرت معالجة الصورة، جرّب مرة ثانية");
     } finally {

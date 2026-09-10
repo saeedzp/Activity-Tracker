@@ -25,6 +25,12 @@ export interface HistoryRow {
   approved: boolean;
 }
 
+/** One stored photo, joined to the submission that claimed it. */
+export interface PhotoRow {
+  submission_id: string;
+  r2_key: string;
+}
+
 export interface StoreName {
   id: string;
   name: string | null;
@@ -36,22 +42,40 @@ export interface StoreName {
 const COLUMNS = [
   "الشهر", "السوق", "الأكاونت", "المدينة", "الاكتفيتي", "البراندات", "المقاس",
   "دخل الاستاند", "تاريخ الدخول", "الحالة", "السبب", "تفاصيل السبب",
-  "السوق الفعلي", "مواد دعائية", "ضمن الخطة", "الموظف", "تاريخ الإرسال",
+  "السوق الفعلي", "مواد دعائية", "ضمن الخطة", "الموظف", "تاريخ الإرسال", "الصور",
 ] as const;
+
+/** The photo cell, so the table and the export agree on which column it is. */
+const PHOTOS_COLUMN = COLUMNS.length - 1;
+
+export function photoUrl(key: string): string {
+  return `/api/photos/${key}`;
+}
 
 export function HistoryTable({
   rows,
   stores,
+  photos,
   months,
   month,
 }: {
   rows: HistoryRow[];
   stores: StoreName[];
+  photos: PhotoRow[];
   months: string[];
   month: string;
 }) {
   const [query, setQuery] = useState("");
   const byId = useMemo(() => new Map(stores.map((s) => [s.id, s])), [stores]);
+  const photosOf = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const photo of photos) {
+      const list = map.get(photo.submission_id);
+      if (list) list.push(photo.r2_key);
+      else map.set(photo.submission_id, [photo.r2_key]);
+    }
+    return map;
+  }, [photos]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -96,6 +120,9 @@ export function HistoryTable({
       row.activity_id ? "نعم" : "خارج الخطة",
       row.emp_id,
       formatDateAr(row.submitted_at?.slice(0, 10) ?? null),
+      // The export carries the addresses, not the pictures: whoever opens the
+      // CSV can follow them, and the file stays a file.
+      (photosOf.get(row.id) ?? []).map(photoUrl).join(" "),
     ];
   }
 
@@ -196,7 +223,11 @@ export function HistoryTable({
                               : "whitespace-nowrap"
                         }`}
                       >
-                        {value}
+                        {index === PHOTOS_COLUMN ? (
+                          <PhotoCell keys={photosOf.get(row.id) ?? []} />
+                        ) : (
+                          value
+                        )}
                       </td>
                     ))}
                   </tr>
@@ -207,5 +238,30 @@ export function HistoryTable({
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * The photos as thumbnails that open full size.
+ *
+ * They load from the app rather than the bucket, which has no public URL, so a
+ * row of the history is readable only by someone already signed in.
+ */
+function PhotoCell({ keys }: { keys: string[] }) {
+  if (keys.length === 0) return <span className="text-[var(--mute)]">—</span>;
+  return (
+    <span className="flex gap-1">
+      {keys.map((key) => (
+        <a key={key} href={photoUrl(key)} target="_blank" rel="noreferrer">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={photoUrl(key)}
+            alt="صورة الإدخال"
+            loading="lazy"
+            className="h-10 w-10 rounded-md border border-[var(--line)] object-cover"
+          />
+        </a>
+      ))}
+    </span>
   );
 }

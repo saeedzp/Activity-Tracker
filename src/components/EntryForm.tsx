@@ -57,6 +57,7 @@ export function EntryForm({
   const [customPosm, setCustomPosm] = useState<boolean | null>(null);
   const [photos, setPhotos] = useState<PreparedPhoto[]>([]);
   const [busy, setBusy] = useState(false);
+  const [uploaded, setUploaded] = useState(0);
   const [error, setError] = useState("");
 
   const activity = activities.find((a) => a.id === activityId);
@@ -97,10 +98,51 @@ export function EntryForm({
     if (key === "yes" && !entryDate) setEntryDate(todayIso());
   }
 
+  /**
+   * Put the photos in the bucket, and stop if any of them will not go.
+   *
+   * The submission is only sent once every photo is stored. An "Implemented"
+   * report with no photo behind it is worse than a retry: it reads as proof in
+   * the export, and nobody could ever tell which of those rows lost a photo to
+   * a weak signal and which was never photographed at all.
+   */
+  async function uploadPhotos(): Promise<string[] | null> {
+    const keys: string[] = [];
+    setUploaded(0);
+    for (const photo of photos) {
+      const form = new FormData();
+      form.append("photo", photo.blob, "photo.jpg");
+      form.append("store_id", storeId);
+      form.append("activity_id", activityId);
+      let res: Response;
+      try {
+        res = await fetch("/api/photos", { method: "POST", body: form });
+      } catch {
+        setError("تعذّر رفع الصور، تأكد من الشبكة وحاول مرة ثانية");
+        return null;
+      }
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        setError(data?.error ?? "تعذّر رفع الصور، حاول مرة ثانية");
+        return null;
+      }
+      const { key } = await res.json();
+      keys.push(key);
+      setUploaded(keys.length);
+    }
+    return keys;
+  }
+
   async function submit() {
     setBusy(true);
     setError("");
     try {
+      const keys = await uploadPhotos();
+      if (keys === null) {
+        setStep("form");
+        return;
+      }
+
       const res = await fetch("/api/submissions", {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -116,7 +158,7 @@ export function EntryForm({
           alt_store_name: elsewhere ? altStoreName.trim() : null,
           note: needsOtherText ? otherReason.trim() : null,
           custom_posm: needsPosmAnswer ? customPosm : null,
-          photo_count: photos.length,
+          photos: keys,
         }),
       });
       const data = await res.json();
@@ -131,6 +173,7 @@ export function EntryForm({
       setStep("form");
     } finally {
       setBusy(false);
+      setUploaded(0);
     }
   }
 
@@ -143,6 +186,7 @@ export function EntryForm({
     setAltStoreName("");
     setEntryDate("");
     setPhotos([]);
+    setUploaded(0);
     setCustomPosm(null);
     setStep("form");
   }
@@ -226,7 +270,13 @@ export function EntryForm({
           disabled={busy}
           className="mt-4 w-full rounded-xl bg-[var(--ink)] p-3.5 font-bold text-white disabled:opacity-35"
         >
-          {busy ? "جارٍ الإرسال…" : "تأكيد وإرسال"}
+          {!busy
+            ? "تأكيد وإرسال"
+            : photos.length > 0 && uploaded < photos.length
+              // Naming the photo being sent turns a frozen button on a weak
+              // signal into something that is visibly still working.
+              ? `جارٍ رفع الصور ${uploaded + 1}/${photos.length}…`
+              : "جارٍ الإرسال…"}
         </button>
         <button
           type="button"

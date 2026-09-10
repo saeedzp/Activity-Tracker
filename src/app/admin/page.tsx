@@ -9,6 +9,7 @@ import { RouteUploader } from "@/components/RouteUploader";
 import {
   HistoryTable,
   type HistoryRow,
+  type PhotoRow,
   type StoreName,
 } from "@/components/HistoryTable";
 import { monthOf } from "@/lib/dates";
@@ -97,12 +98,15 @@ async function HistoryPanel({ db, month }: { db: Db; month: string }) {
     .limit(2000);
   if (month) query = query.eq("month", month);
 
-  const [rows, stores, allMonths] = await Promise.all([
+  const [rows, stores, allMonths, photos] = await Promise.all([
     query,
     // Every store, including switched-off ones: history has to resolve a store
     // that has since closed.
     db.from("stores").select("id, name, account, city"),
     db.from("submissions").select("month").not("month", "is", null),
+    // Joined in the browser rather than per row: one query for the page beats
+    // one per submission.
+    db.from("photos").select("submission_id, r2_key").limit(8000),
   ]);
 
   const months = [
@@ -117,6 +121,7 @@ async function HistoryPanel({ db, month }: { db: Db; month: string }) {
       <HistoryTable
         rows={(rows.data ?? []) as unknown as HistoryRow[]}
         stores={(stores.data ?? []) as unknown as StoreName[]}
+        photos={(photos.data ?? []) as unknown as PhotoRow[]}
         months={months}
         month={month}
       />

@@ -7,12 +7,13 @@
  * array arrives as an object and any array method on it throws at runtime.
  */
 
-export type TabKey = "activities" | "route" | "history";
+export type TabKey = "activities" | "route" | "history" | "photos";
 
 export const TABS: { key: TabKey; label: string }[] = [
   { key: "activities", label: "الاكتفيتي" },
   { key: "route", label: "الروت" },
   { key: "history", label: "السجل" },
+  { key: "photos", label: "الصور" },
 ];
 
 export function tabOf(value: string | undefined): TabKey {

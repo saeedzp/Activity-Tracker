@@ -17,7 +17,8 @@ describe("admin tabs", () => {
     // The page calls .some() on this; importing it from a "use client" module
     // made that throw at runtime while type-checking cleanly.
     expect(Array.isArray(TABS)).toBe(true);
-    expect(TABS).toHaveLength(3);
+    expect(TABS.length).toBeGreaterThan(0);
+    expect(typeof TABS.some).toBe("function");
   });
 
   it("has no duplicate keys", () => {

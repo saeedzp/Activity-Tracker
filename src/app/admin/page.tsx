@@ -12,6 +12,8 @@ import {
   type PhotoRow,
   type StoreName,
 } from "@/components/HistoryTable";
+import { PhotoGallery } from "@/components/PhotoGallery";
+import type { ExportPhoto } from "@/lib/photo-export";
 import { monthOf } from "@/lib/dates";
 
 // Cloudflare Pages runs every route on the edge runtime.
@@ -52,6 +54,9 @@ export default async function AdminPage({
       )}
       {tab === "route" && <RoutePanel db={db} />}
       {tab === "history" && <HistoryPanel db={db} month={requestedMonth?.trim() ?? ""} />}
+      {tab === "photos" && (
+        <PhotosPanel db={db} month={requestedMonth?.trim() || monthOf(new Date())} />
+      )}
     </main>
   );
 }
@@ -125,6 +130,70 @@ async function HistoryPanel({ db, month }: { db: Db; month: string }) {
         months={months}
         month={month}
       />
+    </>
+  );
+}
+
+/**
+ * The month's photos, grouped for review and for download.
+ *
+ * Assembled here rather than in the browser: the photo row knows only its
+ * submission, and it takes the store to say which region and city it belongs
+ * to. Every store is read, switched-off ones included, so a store closed since
+ * the photo was taken still lands in the right city.
+ */
+async function PhotosPanel({ db, month }: { db: Db; month: string }) {
+  const [subs, stores] = await Promise.all([
+    db.from("submissions").select("id, store_id, activity_name").eq("month", month),
+    db.from("stores").select("id, name, region, city"),
+  ]);
+
+  const rows = (subs.data ?? []) as unknown as {
+    id: string;
+    store_id: string;
+    activity_name: string | null;
+  }[];
+
+  const photos =
+    rows.length === 0
+      ? { data: [] }
+      : await db
+          .from("photos")
+          .select("submission_id, r2_key")
+          .in("submission_id", rows.map((r) => r.id))
+          .limit(8000);
+
+  const byId = new Map(rows.map((r) => [r.id, r]));
+  const storeById = new Map(
+    ((stores.data ?? []) as unknown as {
+      id: string;
+      name: string | null;
+      region: string | null;
+      city: string | null;
+    }[]).map((s) => [s.id, s]),
+  );
+
+  const list: ExportPhoto[] = ((photos.data ?? []) as unknown as {
+    submission_id: string;
+    r2_key: string;
+  }[]).map((photo) => {
+    const submission = byId.get(photo.submission_id);
+    const store = submission ? storeById.get(submission.store_id) : undefined;
+    return {
+      key: photo.r2_key,
+      activityName: submission?.activity_name ?? null,
+      region: store?.region ?? null,
+      city: store?.city ?? null,
+      storeName: store?.name ?? null,
+    };
+  });
+
+  return (
+    <>
+      <PanelHead title="الصور" note="صور الشهر مرتبة بالمنطقة، وتنزيل كل منطقة على حدة.">
+        <MonthPicker month={month} tab="photos" />
+      </PanelHead>
+      <PhotoGallery photos={list} month={month} />
     </>
   );
 }

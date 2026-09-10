@@ -3,7 +3,7 @@ import { planExport, segment, zipName, type ExportPhoto } from "../src/lib/photo
 
 const photo = (over: Partial<ExportPhoto> = {}): ExportPhoto => ({
   key: "2026-09/AM260/a.jpg",
-  activityName: "العودة للمدارس",
+  activityName: "Back to School",
   region: "West",
   city: "Jeddah",
   storeName: "Panda Al Rawabi",
@@ -27,9 +27,9 @@ describe("segment", () => {
   });
 
   it("falls back when there is nothing left", () => {
-    expect(segment("", "غير محدد")).toBe("غير محدد");
-    expect(segment(null, "غير محدد")).toBe("غير محدد");
-    expect(segment("///", "غير محدد")).toBe("غير محدد");
+    expect(segment("", "Unknown")).toBe("Unknown");
+    expect(segment(null, "Unknown")).toBe("Unknown");
+    expect(segment("///", "Unknown")).toBe("Unknown");
   });
 });
 
@@ -37,7 +37,7 @@ describe("planExport", () => {
   it("files a photo under campaign, region and city, named for the store", () => {
     const [bundle] = planExport([photo()]);
     expect(bundle.region).toBe("West");
-    expect(bundle.files[0].path).toBe("العودة للمدارس/West/Jeddah/Panda Al Rawabi.jpg");
+    expect(bundle.files[0].path).toBe("Back to School/West/Jeddah/Panda Al Rawabi.jpg");
   });
 
   it("numbers a second photo of the same store instead of losing it", () => {
@@ -47,9 +47,9 @@ describe("planExport", () => {
       photo({ key: "k3" }),
     ])[0].files;
     expect(files.map((f) => f.path)).toEqual([
-      "العودة للمدارس/West/Jeddah/Panda Al Rawabi.jpg",
-      "العودة للمدارس/West/Jeddah/Panda Al Rawabi-2.jpg",
-      "العودة للمدارس/West/Jeddah/Panda Al Rawabi-3.jpg",
+      "Back to School/West/Jeddah/Panda Al Rawabi.jpg",
+      "Back to School/West/Jeddah/Panda Al Rawabi-2.jpg",
+      "Back to School/West/Jeddah/Panda Al Rawabi-3.jpg",
     ]);
   });
 
@@ -68,8 +68,8 @@ describe("planExport", () => {
     const [bundle] = planExport([
       photo({ activityName: null, region: null, city: null, storeName: null }),
     ]);
-    expect(bundle.region).toBe("غير محدد");
-    expect(bundle.files[0].path).toBe("بدون اكتفيتي/غير محدد/غير محدد/غير محدد.jpg");
+    expect(bundle.region).toBe("Unknown");
+    expect(bundle.files[0].path).toBe("No Activity/Unknown/Unknown/Unknown.jpg");
   });
 
   it("produces the same names every time it runs", () => {

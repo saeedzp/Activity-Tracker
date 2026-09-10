@@ -124,9 +124,13 @@ export function ActivityManager({
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="العودة للمدارس"
+            placeholder="Back to School"
+            dir="ltr"
             className="w-full rounded-lg border border-[var(--line)] p-2.5 text-sm"
           />
+          <span className="mt-1 block text-[11px] text-[var(--mute)]">
+            بالإنجليزي كما يصل من مارس — الاسم يروح للتصدير ويصير مجلد الصور.
+          </span>
         </label>
 
         <label className="mb-2 block">

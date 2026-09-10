@@ -5,6 +5,12 @@
  * needs to carry only the store: everything else is already the path it sits
  * in.
  *
+ * The whole tree is English, which is the rule for anything that leaves the
+ * app. Region, city and store arrive from the route file already English, the
+ * campaign name is entered in English exactly as Mars sends it, and the
+ * fallbacks here are English too. Nothing is ever transliterated: a folder
+ * always matches a name someone actually chose.
+ *
  * A download is one region at a time, because a whole month is a large file to
  * pull over one connection. The paths inside stay full anyway, so unzipping
  * several regions into the same folder rebuilds one coherent tree rather than
@@ -13,6 +19,7 @@
 
 export interface ExportPhoto {
   key: string;
+  /** The campaign name, as entered — English, like everything exported. */
   activityName: string | null;
   region: string | null;
   city: string | null;
@@ -31,8 +38,9 @@ export interface RegionBundle {
   files: ExportFile[];
 }
 
-const UNKNOWN = "غير محدد";
-const NO_CAMPAIGN = "بدون اكتفيتي";
+/** English too, so a missing value does not put Arabic into an English tree. */
+const UNKNOWN = "Unknown";
+const NO_CAMPAIGN = "No Activity";
 
 /** A folder or file name that survives Windows, macOS and Linux alike. */
 export function segment(value: string | null | undefined, fallback: string): string {
@@ -61,10 +69,10 @@ export function segment(value: string | null | undefined, fallback: string): str
 export function planExport(photos: ExportPhoto[]): RegionBundle[] {
   const sorted = [...photos].sort(
     (a, b) =>
-      (a.activityName ?? "").localeCompare(b.activityName ?? "", "ar") ||
-      (a.region ?? "").localeCompare(b.region ?? "", "ar") ||
-      (a.city ?? "").localeCompare(b.city ?? "", "ar") ||
-      (a.storeName ?? "").localeCompare(b.storeName ?? "", "ar") ||
+      (a.activityName ?? "").localeCompare(b.activityName ?? "", "en") ||
+      (a.region ?? "").localeCompare(b.region ?? "", "en") ||
+      (a.city ?? "").localeCompare(b.city ?? "", "en") ||
+      (a.storeName ?? "").localeCompare(b.storeName ?? "", "en") ||
       a.key.localeCompare(b.key),
   );
 
@@ -89,7 +97,7 @@ export function planExport(photos: ExportPhoto[]): RegionBundle[] {
 
   return [...bundles.entries()]
     .map(([region, files]) => ({ region, files }))
-    .sort((a, b) => a.region.localeCompare(b.region, "ar"));
+    .sort((a, b) => a.region.localeCompare(b.region, "en"));
 }
 
 export function zipName(month: string, region: string): string {

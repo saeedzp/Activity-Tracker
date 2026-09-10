@@ -1,0 +1,12 @@
+-- A picture of the campaign, so the employee recognises it instead of reading
+--
+-- Two campaigns in one month can carry the same brands and differ only in the
+-- artwork on the stand. A name in a list does not tell an employee standing in
+-- an aisle which of them arrived; the picture does at a glance.
+--
+-- The image is stored inline as a data URL rather than in object storage: a
+-- month has a handful of campaigns, the picture is downscaled to a thumbnail
+-- in the browser before it is ever sent, and a column needs no bucket, no keys
+-- and no second thing that can be misconfigured. Store photos are a different
+-- problem — hundreds a month, full size — and belong in R2.
+alter table activities add column if not exists image text;

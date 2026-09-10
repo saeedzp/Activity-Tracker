@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
 import { serviceClient } from "@/lib/supabase";
 import { isAdmin } from "@/lib/admin";
+import { checkImage } from "@/lib/activity-image";
 
 // Cloudflare Pages runs every route on the edge runtime.
 export const runtime = "edge";
 
-const SELECT = "id, month, name, brands, active, sort_order";
+const SELECT = "id, month, name, brands, image, active, sort_order";
 
 /** The campaigns planned for one month. */
 export async function GET(request: Request) {
@@ -52,11 +53,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "أضف براند واحد على الأقل" }, { status: 400 });
   }
 
+  // Checked here and not only in the browser: the picture goes into a column
+  // the admin screen renders, and this route answers anyone holding the
+  // passcode.
+  const image = checkImage(body?.image);
+  if (!image.ok) return NextResponse.json({ error: image.error }, { status: 400 });
+
   const db = serviceClient();
   const row = {
     month,
     name,
     brands,
+    image: image.image,
     active: body?.active !== false,
     sort_order: Number.isFinite(Number(body?.sort_order)) ? Number(body.sort_order) : 100,
   };

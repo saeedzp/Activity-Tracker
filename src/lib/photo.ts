@@ -9,6 +9,15 @@
 export const MAX_WIDTH = 1600;
 export const QUALITY = 0.85;
 
+/**
+ * A campaign picture is a thumbnail in a list, not evidence.
+ *
+ * It rides inside the activity row as a data URL, so it is kept small enough
+ * that a month of campaigns costs less than one store photo.
+ */
+export const THUMB_WIDTH = 480;
+export const THUMB_QUALITY = 0.72;
+
 export interface PreparedPhoto {
   blob: Blob;
   dataUrl: string;
@@ -38,9 +47,13 @@ export function scaleToFit(
  * createImageBitmap applies the EXIF orientation, so a photo taken sideways is
  * not stored upside down — a canvas fed the raw file would keep the rotation.
  */
-export async function preparePhoto(file: File): Promise<PreparedPhoto> {
+export async function preparePhoto(
+  file: File,
+  max = MAX_WIDTH,
+  quality = QUALITY,
+): Promise<PreparedPhoto> {
   const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
-  const { width, height } = scaleToFit(bitmap.width, bitmap.height);
+  const { width, height } = scaleToFit(bitmap.width, bitmap.height, max);
 
   const canvas = document.createElement("canvas");
   canvas.width = width;
@@ -51,13 +64,13 @@ export async function preparePhoto(file: File): Promise<PreparedPhoto> {
   bitmap.close();
 
   const blob = await new Promise<Blob | null>((resolve) =>
-    canvas.toBlob(resolve, "image/jpeg", QUALITY),
+    canvas.toBlob(resolve, "image/jpeg", quality),
   );
   if (!blob) throw new Error("could not encode the photo");
 
   return {
     blob,
-    dataUrl: canvas.toDataURL("image/jpeg", QUALITY),
+    dataUrl: canvas.toDataURL("image/jpeg", quality),
     width,
     height,
     bytes: blob.size,

@@ -34,7 +34,7 @@ export default async function StoreEntryPage({
     // This month's campaigns: what the employee is reporting against.
     db
       .from("activities")
-      .select("id, name, brands")
+      .select("id, name, brands, image")
       .eq("month", monthOf(new Date()))
       .eq("active", true)
       .order("sort_order")

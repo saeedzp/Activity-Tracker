@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { formatMonthAr } from "@/lib/dates";
+import { preparePhoto, THUMB_QUALITY, THUMB_WIDTH } from "@/lib/photo";
 
 export interface ActivityRow {
   id: string;
   month: string;
   name: string;
   brands: string[];
+  image: string | null;
   active: boolean;
   sort_order: number;
 }
@@ -30,6 +32,8 @@ export function ActivityManager({
   const [name, setName] = useState("");
   const [brands, setBrands] = useState<string[]>([]);
   const [brandDraft, setBrandDraft] = useState("");
+  const [image, setImage] = useState<string | null>(null);
+  const imageInput = useRef<HTMLInputElement>(null);
   const [editing, setEditing] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -45,7 +49,25 @@ export function ActivityManager({
     setName("");
     setBrands([]);
     setBrandDraft("");
+    setImage(null);
     setEditing(null);
+    if (imageInput.current) imageInput.current.value = "";
+  }
+
+  /**
+   * Shrunk to a thumbnail here, in the browser, before it is ever sent.
+   * The picture rides inside the activity row, and a raw camera photo would
+   * make every employee download several megabytes to read a list.
+   */
+  async function chooseImage(file: File | undefined) {
+    if (!file) return;
+    setError("");
+    try {
+      const prepared = await preparePhoto(file, THUMB_WIDTH, THUMB_QUALITY);
+      setImage(prepared.dataUrl);
+    } catch {
+      setError("تعذّرت معالجة الصورة، جرّب صورة ثانية");
+    }
   }
 
   async function save() {
@@ -57,7 +79,13 @@ export function ActivityManager({
       const res = await fetch("/api/activities", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ month, name: name.trim(), brands, ...(editing ? { id: editing } : {}) }),
+        body: JSON.stringify({
+          month,
+          name: name.trim(),
+          brands,
+          image,
+          ...(editing ? { id: editing } : {}),
+        }),
       });
       const data = await res.json();
       if (!res.ok) return setError(data.error ?? "تعذّر الحفظ");
@@ -147,6 +175,55 @@ export function ActivityManager({
           </div>
         )}
 
+        <div className="mb-3">
+          <span className="mb-1 block text-xs text-[var(--mute)]">صورة الاكتفيتي (اختياري)</span>
+          <div className="flex items-center gap-3">
+            {image ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={image}
+                alt=""
+                className="h-16 w-16 flex-none rounded-lg border border-[var(--line)] object-cover"
+              />
+            ) : (
+              <div className="grid h-16 w-16 flex-none place-items-center rounded-lg border border-dashed border-[var(--line)] text-[10px] text-[var(--mute)]">
+                بلا صورة
+              </div>
+            )}
+            <div className="flex flex-col gap-1.5">
+              <button
+                type="button"
+                onClick={() => imageInput.current?.click()}
+                className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-xs font-bold"
+              >
+                {image ? "تغيير الصورة" : "اختر صورة"}
+              </button>
+              {image && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setImage(null);
+                    if (imageInput.current) imageInput.current.value = "";
+                  }}
+                  className="text-xs text-[var(--warn)] underline"
+                >
+                  إزالة
+                </button>
+              )}
+            </div>
+          </div>
+          <input
+            ref={imageInput}
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={(e) => chooseImage(e.target.files?.[0])}
+          />
+          <p className="mt-1.5 text-[11px] text-[var(--mute)]">
+            تُصغَّر الصورة تلقائياً قبل الحفظ، فيميّزها الموظف بلا تحميل ثقيل.
+          </p>
+        </div>
+
         {error && (
           <p className="mt-2 rounded-lg bg-[var(--warn-soft)] px-3 py-2 text-xs text-[var(--warn)]">
             {error}
@@ -191,7 +268,16 @@ export function ActivityManager({
                 }`}
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div>
+                  <div className="flex items-start gap-3">
+                    {r.image && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={r.image}
+                        alt=""
+                        className="h-12 w-12 flex-none rounded-lg border border-[var(--line)] object-cover"
+                      />
+                    )}
+                    <div>
                     <b className="block">{r.name}</b>
                     <div className="mt-1.5 flex flex-wrap gap-1.5">
                       {r.brands.map((b) => (
@@ -203,6 +289,7 @@ export function ActivityManager({
                         </span>
                       ))}
                     </div>
+                    </div>
                   </div>
                   <div className="flex flex-none gap-2 text-xs">
                     <button
@@ -211,6 +298,7 @@ export function ActivityManager({
                         setEditing(r.id);
                         setName(r.name);
                         setBrands(r.brands);
+                        setImage(r.image);
                       }}
                       className="text-[var(--mute)] underline"
                     >

@@ -18,6 +18,8 @@ export interface ActivityOption {
   id: string;
   name: string;
   brands: string[];
+  /** A picture of the campaign, when the admin added one. */
+  image: string | null;
 }
 
 /**
@@ -257,19 +259,31 @@ export function EntryForm({
               key={a.id}
               type="button"
               onClick={() => setActivityId(a.id)}
-              className={`rounded-xl border p-3 text-right ${
+              className={`flex items-center gap-3 rounded-xl border p-3 text-right ${
                 activityId === a.id
                   ? "border-[var(--ink)] bg-[var(--ink)] text-white"
                   : "border-[var(--line)] bg-white"
               }`}
             >
-              <span className="block font-bold">{a.name}</span>
-              <span
-                className={`mt-0.5 block text-xs ${
-                  activityId === a.id ? "opacity-75" : "text-[var(--mute)]"
-                }`}
-              >
-                {a.brands.join(" · ")}
+              {a.image && (
+                // The picture is why this list is scannable: two campaigns can
+                // carry the same brands and differ only in the artwork.
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={a.image}
+                  alt=""
+                  className="h-14 w-14 flex-none rounded-lg border border-black/10 bg-white object-cover"
+                />
+              )}
+              <span className="min-w-0">
+                <span className="block font-bold">{a.name}</span>
+                <span
+                  className={`mt-0.5 block text-xs ${
+                    activityId === a.id ? "opacity-75" : "text-[var(--mute)]"
+                  }`}
+                >
+                  {a.brands.join(" · ")}
+                </span>
               </span>
             </button>
           ))}

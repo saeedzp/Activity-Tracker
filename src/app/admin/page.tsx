@@ -60,7 +60,7 @@ type Db = ReturnType<typeof serviceClient>;
 async function ActivitiesPanel({ db, month }: { db: Db; month: string }) {
   const { data } = await db
     .from("activities")
-    .select("id, month, name, brands, active, sort_order")
+    .select("id, month, name, brands, image, active, sort_order")
     .eq("month", month)
     .order("sort_order")
     .order("name");

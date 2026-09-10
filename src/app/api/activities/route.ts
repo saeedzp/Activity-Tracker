@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { serviceClient } from "@/lib/supabase";
-import { currentSession } from "@/lib/session";
 import { isAdmin } from "@/lib/admin";
 
 // Cloudflare Pages runs every route on the edge runtime.
@@ -10,10 +9,8 @@ const SELECT = "id, month, name, brands, active, sort_order";
 
 /** The campaigns planned for one month. */
 export async function GET(request: Request) {
-  const session = await currentSession();
-  if (!session) return NextResponse.json({ error: "غير مصرّح" }, { status: 401 });
   if (!(await isAdmin())) {
-    return NextResponse.json({ error: "يلزم الرقم السري" }, { status: 403 });
+    return NextResponse.json({ error: "يلزم الرقم السري" }, { status: 401 });
   }
 
   const month = new URL(request.url).searchParams.get("month")?.trim();
@@ -33,10 +30,8 @@ export async function GET(request: Request) {
 
 /** Add a campaign, or edit one by id. */
 export async function POST(request: Request) {
-  const session = await currentSession();
-  if (!session) return NextResponse.json({ error: "غير مصرّح" }, { status: 401 });
   if (!(await isAdmin())) {
-    return NextResponse.json({ error: "يلزم الرقم السري" }, { status: 403 });
+    return NextResponse.json({ error: "يلزم الرقم السري" }, { status: 401 });
   }
 
   const body = await request.json().catch(() => null);
@@ -75,10 +70,8 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const session = await currentSession();
-  if (!session) return NextResponse.json({ error: "غير مصرّح" }, { status: 401 });
   if (!(await isAdmin())) {
-    return NextResponse.json({ error: "يلزم الرقم السري" }, { status: 403 });
+    return NextResponse.json({ error: "يلزم الرقم السري" }, { status: 401 });
   }
 
   const id = new URL(request.url).searchParams.get("id");

@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { serviceClient } from "@/lib/supabase";
-import { currentSession } from "@/lib/session";
 import { isAdmin } from "@/lib/admin";
 import { diffRoute, usersFrom, type StoreRecordRow } from "@/lib/route-import";
 import { parseRouteFile, STORE_COLUMNS } from "@/lib/route-service";
@@ -18,10 +17,8 @@ export const runtime = "edge";
  * The comparison still runs, but only to report what happened afterwards.
  */
 export async function POST(request: Request) {
-  const session = await currentSession();
-  if (!session) return NextResponse.json({ error: "غير مصرّح" }, { status: 401 });
   if (!(await isAdmin())) {
-    return NextResponse.json({ error: "يلزم الرقم السري" }, { status: 403 });
+    return NextResponse.json({ error: "يلزم الرقم السري" }, { status: 401 });
   }
 
   const form = await request.formData().catch(() => null);

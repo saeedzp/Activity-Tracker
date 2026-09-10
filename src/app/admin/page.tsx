@@ -2,7 +2,8 @@ import { requireAdmin } from "@/lib/admin-guard";
 import { missingEnv } from "@/lib/config";
 import { serviceClient } from "@/lib/supabase";
 import { SetupNeeded } from "@/components/SetupNeeded";
-import { AdminTabs, TABS, type TabKey } from "@/components/AdminTabs";
+import { AdminTabs } from "@/components/AdminTabs";
+import { tabOf, type TabKey } from "@/lib/admin-tabs";
 import { ActivityManager, type ActivityRow } from "@/components/ActivityManager";
 import { RouteUploader } from "@/components/RouteUploader";
 import {
@@ -20,10 +21,6 @@ const HISTORY_SELECT =
   "id, month, store_id, emp_id, activity_name, brands, display_type, entered, entry_date," +
   " implementation_date, status, reason_code, alt_store_name, note," +
   " custom_posm, activity_id, submitted_at, approved";
-
-function tabOf(value: string | undefined): TabKey {
-  return TABS.some((t) => t.key === value) ? (value as TabKey) : "activities";
-}
 
 /**
  * All three admin jobs behind one address.

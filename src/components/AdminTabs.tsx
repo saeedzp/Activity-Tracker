@@ -1,15 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-
-export type TabKey = "activities" | "route" | "history";
-
-/** One screen, three jobs. The tab lives in the URL so a reload stays put. */
-export const TABS: { key: TabKey; label: string; hint: string }[] = [
-  { key: "activities", label: "الاكتفيتي", hint: "حملات الشهر وبرانداتها" },
-  { key: "route", label: "الروت", hint: "الأسواق والموظفون" },
-  { key: "history", label: "السجل", hint: "كل الإدخالات والتصدير" },
-];
+import { TABS, type TabKey } from "@/lib/admin-tabs";
 
 export function AdminTabs({ active }: { active: TabKey }) {
   const router = useRouter();

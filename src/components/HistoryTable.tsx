@@ -116,6 +116,7 @@ export function HistoryTable({
   return (
     <div>
       <form className="mb-4 flex flex-wrap items-end gap-2">
+        <input type="hidden" name="tab" value="history" />
         <label className="text-sm">
           <span className="mb-1 block text-xs text-[var(--mute)]">الشهر</span>
           <select

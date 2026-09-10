@@ -11,9 +11,9 @@ export default async function AdminLoginPage({
 }: {
   searchParams: Promise<{ next?: string }>;
 }) {
-  if (await isAdmin()) redirect("/admin/activities");
+  if (await isAdmin()) redirect("/admin");
   const { next } = await searchParams;
   // Only a path within the app, so the parameter cannot bounce anyone offsite.
-  const target = next?.startsWith("/admin/") ? next : "/admin/activities";
+  const target = next?.startsWith("/admin") ? next : "/admin";
   return <AdminLogin next={target} />;
 }

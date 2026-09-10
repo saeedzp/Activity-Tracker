@@ -13,6 +13,11 @@ import {
   type StoreName,
 } from "@/components/HistoryTable";
 import { PhotoGallery } from "@/components/PhotoGallery";
+import {
+  PlanogramManager,
+  type PlanogramRow,
+  type ActivityOption as PlanogramActivity,
+} from "@/components/PlanogramManager";
 import type { ExportPhoto } from "@/lib/photo-export";
 import { monthOf } from "@/lib/dates";
 
@@ -57,6 +62,9 @@ export default async function AdminPage({
         <ActivitiesPanel db={db} month={requestedMonth?.trim() || monthOf(new Date())} />
       )}
       {tab === "route" && <RoutePanel db={db} />}
+      {tab === "planograms" && (
+        <PlanogramsPanel db={db} month={requestedMonth?.trim() || monthOf(new Date())} />
+      )}
       {tab === "history" && <HistoryPanel db={db} month={requestedMonth?.trim() ?? ""} />}
       {tab === "photos" && (
         <PhotosPanel db={db} month={requestedMonth?.trim() || monthOf(new Date())} />
@@ -133,6 +141,54 @@ async function HistoryPanel({ db, month }: { db: Db; month: string }) {
         photos={(photos.data ?? []) as unknown as PhotoRow[]}
         months={months}
         month={month}
+      />
+    </>
+  );
+}
+
+/**
+ * Planograms: this month's upload form, and every month's archive.
+ *
+ * The campaign list is the month on screen, because that is what a new
+ * planogram can attach to. The planogram list is every month, because looking
+ * one up is the whole point of keeping them — the names are resolved across
+ * all campaigns so an old row still reads as something rather than an id.
+ */
+async function PlanogramsPanel({ db, month }: { db: Db; month: string }) {
+  const [monthActivities, allActivities, planograms] = await Promise.all([
+    db
+      .from("activities")
+      .select("id, name")
+      .eq("month", month)
+      .eq("active", true)
+      .order("sort_order")
+      .order("name"),
+    db.from("activities").select("id, name"),
+    db
+      .from("planograms")
+      .select("id, activity_id, month, display_type, title, r2_key, bytes, created_at")
+      .order("created_at", { ascending: false })
+      .limit(2000),
+  ]);
+
+  const names: Record<string, string> = {};
+  for (const row of (allActivities.data ?? []) as unknown as { id: string; name: string }[]) {
+    names[row.id] = row.name;
+  }
+
+  return (
+    <>
+      <PanelHead
+        title="Planograms"
+        note="The drawing of the stand, for the employee to build against."
+      >
+        <MonthPicker month={month} tab="planograms" />
+      </PanelHead>
+      <PlanogramManager
+        month={month}
+        activities={(monthActivities.data ?? []) as unknown as PlanogramActivity[]}
+        rows={(planograms.data ?? []) as unknown as PlanogramRow[]}
+        activityNames={names}
       />
     </>
   );

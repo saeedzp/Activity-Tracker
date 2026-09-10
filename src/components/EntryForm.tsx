@@ -22,6 +22,16 @@ export interface ActivityOption {
   image: string | null;
 }
 
+/** The drawing of the stand, for one campaign and — sometimes — one size. */
+export interface PlanogramOption {
+  id: string;
+  activity_id: string;
+  /** null means the drawing covers every size in the campaign. */
+  display_type: string | null;
+  title: string | null;
+  r2_key: string;
+}
+
 /**
  * The one question the whole entry turns on, and the status each answer means.
  * Asking "did it go in?" once — rather than asking about entry and then about
@@ -40,10 +50,12 @@ export function EntryForm({
   storeId,
   storeName,
   activities,
+  planograms = [],
 }: {
   storeId: string;
   storeName: string;
   activities: ActivityOption[];
+  planograms?: PlanogramOption[];
 }) {
   const router = useRouter();
   const [step, setStep] = useState<Step>("form");
@@ -61,6 +73,16 @@ export function EntryForm({
   const [error, setError] = useState("");
 
   const activity = activities.find((a) => a.id === activityId);
+  /**
+   * The drawing for exactly this size when there is one, otherwise the
+   * campaign-wide drawing. A campaign shipping a 2x2 and a gondola has one for
+   * each; a campaign with a single drawing leaves the size empty.
+   */
+  const planogram =
+    activityId && displayType
+      ? planograms.find((p) => p.activity_id === activityId && p.display_type === displayType) ??
+        planograms.find((p) => p.activity_id === activityId && p.display_type === null)
+      : undefined;
   const status = (ANSWERS.find((a) => a.key === answer)?.status ?? "") as Status | "";
   const wentIn = answer === "yes";
   const didNot = answer === "no";
@@ -357,6 +379,29 @@ export function EntryForm({
           </button>
         ))}
       </div>
+
+      {planogram && (
+        // Placed between the size and the question: by now the employee knows
+        // which stand they are looking at, and they are about to say whether
+        // they built it.
+        <a
+          href={`/api/planograms/${planogram.r2_key}`}
+          target="_blank"
+          rel="noreferrer"
+          className="mt-4 flex items-center gap-3 rounded-xl border border-[var(--amber)] bg-[var(--amber-soft)] p-3.5"
+        >
+          <span className="text-2xl">📄</span>
+          <span className="min-w-0 flex-1">
+            <b className="block text-sm">شوف البلانوغرام</b>
+            <span className="block text-xs text-[var(--mute)]">
+              {planogram.title
+                ? planogram.title
+                : "شكل الاستاند والأصناف اللي عليه"}
+            </span>
+          </span>
+          <span className="text-[var(--mute)]">‹</span>
+        </a>
+      )}
 
       <Label>هل تم إدخال الاستاند للسوق؟</Label>
       <div className="flex flex-col gap-2">

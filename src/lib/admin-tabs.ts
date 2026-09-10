@@ -11,11 +11,12 @@
  * array arrives as an object and any array method on it throws at runtime.
  */
 
-export type TabKey = "activities" | "route" | "history" | "photos";
+export type TabKey = "activities" | "route" | "planograms" | "history" | "photos";
 
 export const TABS: { key: TabKey; label: string }[] = [
   { key: "activities", label: "Activities" },
   { key: "route", label: "Route" },
+  { key: "planograms", label: "Planograms" },
   { key: "history", label: "History" },
   { key: "photos", label: "Photos" },
 ];

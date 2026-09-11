@@ -4,6 +4,8 @@ import { missingEnv } from "@/lib/config";
 import { serviceClient } from "@/lib/supabase";
 import { SetupNeeded } from "@/components/SetupNeeded";
 import { AppBar } from "@/components/AppBar";
+import { currentLang } from "@/lib/lang-server";
+import { dirOf } from "@/lib/i18n";
 import {
   EntryForm,
   type ActivityOption,
@@ -21,12 +23,13 @@ export default async function StoreEntryPage({
   params: Promise<{ id: string }>;
 }) {
   const missing = missingEnv();
-  if (missing.length > 0) return <SetupNeeded missing={missing} />;
+  if (missing.length > 0) return <SetupNeeded missing={missing} lang={await currentLang()} />;
 
   const session = await currentSession();
   if (!session) redirect("/");
 
   const { id } = await params;
+  const lang = await currentLang();
   const db = serviceClient();
   const [storeResult, activityResult, planogramResult] = await Promise.all([
     db
@@ -63,13 +66,14 @@ export default async function StoreEntryPage({
 
   return (
     <>
-      <AppBar name={session.name} />
-      <main className="mx-auto max-w-[560px] p-4">
+      <AppBar name={session.name} lang={lang} />
+      <main dir={dirOf(lang)} className="mx-auto max-w-[560px] p-4">
         <EntryForm
           storeId={store.id}
           storeName={store.name}
           activities={activities}
           planograms={planograms}
+          lang={lang}
         />
       </main>
     </>

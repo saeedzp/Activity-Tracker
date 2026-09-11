@@ -48,7 +48,8 @@ export default async function AdminPage({
   searchParams: Promise<{ tab?: string; month?: string }>;
 }) {
   const missing = missingEnv();
-  if (missing.length > 0) return <SetupNeeded missing={missing} />;
+  // The admin screens are English regardless of the employee's choice.
+  if (missing.length > 0) return <SetupNeeded missing={missing} lang="en" />;
 
   const { tab: requestedTab, month: requestedMonth } = await searchParams;
   const tab = tabOf(requestedTab);

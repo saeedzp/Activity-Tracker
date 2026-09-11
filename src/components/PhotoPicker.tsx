@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { formatBytes, preparePhoto, type PreparedPhoto } from "@/lib/photo";
 import { MAX_PHOTOS } from "@/lib/photo-key";
+import { t, type Lang } from "@/lib/i18n";
 
 /**
  * Camera-first photo picker.
@@ -15,11 +16,14 @@ export function PhotoPicker({
   photos,
   onChange,
   requiredCount,
+  lang,
 }: {
   photos: PreparedPhoto[];
   onChange: (next: PreparedPhoto[]) => void;
   requiredCount: number;
+  lang: Lang;
 }) {
+  const s = t(lang).photos;
   const input = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -34,18 +38,18 @@ export function PhotoPicker({
         if (!file.type.startsWith("image/")) continue;
         prepared.push(await preparePhoto(file));
       }
-      if (!prepared.length) return setError("اختر صورة");
+      if (!prepared.length) return setError(s.choose);
       // A cap the employee can see, rather than an upload refused later: four
       // angles are evidence, forty are a bill.
       const next = [...photos, ...prepared];
       if (next.length > MAX_PHOTOS) {
-        setError(`أقصى عدد صور ${MAX_PHOTOS}`);
+        setError(`${s.max} ${MAX_PHOTOS}`);
         onChange(next.slice(0, MAX_PHOTOS));
         return;
       }
       onChange(next);
     } catch {
-      setError("تعذّرت معالجة الصورة، جرّب مرة ثانية");
+      setError(s.processFailed);
     } finally {
       setBusy(false);
       if (input.current) input.current.value = "";
@@ -60,11 +64,11 @@ export function PhotoPicker({
         {photos.map((photo, index) => (
           <div key={index} className="relative overflow-hidden rounded-xl border border-[var(--line)]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={photo.dataUrl} alt={`صورة ${index + 1}`} className="aspect-square w-full object-cover" />
+            <img src={photo.dataUrl} alt={s.alt(index + 1)} className="aspect-square w-full object-cover" />
             <button
               type="button"
               onClick={() => onChange(photos.filter((_, i) => i !== index))}
-              aria-label={`حذف الصورة ${index + 1}`}
+              aria-label={s.remove(index + 1)}
               className="absolute left-1 top-1 grid h-7 w-7 place-items-center rounded-full bg-black/65 text-sm text-white"
             >
               ✕
@@ -98,11 +102,11 @@ export function PhotoPicker({
       {error && <p className="mt-2 text-xs text-[var(--warn)]">{error}</p>}
       {missing > 0 ? (
         <p className="mt-2 text-xs text-[var(--warn)]">
-          مطلوب {missing === 1 ? "صورة واحدة على الأقل" : `${missing} صور على الأقل`}
+          {missing === 1 ? s.needOne : s.needMany(missing)}
         </p>
       ) : (
         <p className="mt-2 text-xs text-[var(--mute)]">
-          تقدر تضيف صور إضافية للجهة الأخرى — اختياري.
+          {s.extras}
         </p>
       )}
     </div>

@@ -5,6 +5,8 @@ import { serviceClient } from "@/lib/supabase";
 import { SetupNeeded } from "@/components/SetupNeeded";
 import { AppBar } from "@/components/AppBar";
 import { groupStores, type StoreRow } from "@/lib/store-list";
+import { currentLang } from "@/lib/lang-server";
+import { dirOf, t } from "@/lib/i18n";
 
 // Cloudflare Pages runs every route on the edge runtime.
 export const runtime = "edge";
@@ -12,7 +14,9 @@ export const dynamic = "force-dynamic";
 
 export default async function StoresPage() {
   const missing = missingEnv();
-  if (missing.length > 0) return <SetupNeeded missing={missing} />;
+  const lang = await currentLang();
+  const s = t(lang).stores;
+  if (missing.length > 0) return <SetupNeeded missing={missing} lang={lang} />;
 
   const session = await currentSession();
   if (!session) redirect("/");
@@ -33,20 +37,22 @@ export default async function StoresPage() {
 
   return (
     <>
-      <AppBar name={session.name} />
-      <main className="mx-auto max-w-[560px] p-4 pb-20">
-        <h1 className="text-lg font-bold">أسواقك</h1>
-        <p className="mb-4 text-sm text-[var(--mute)]">{stores.length} سوق</p>
+      <AppBar name={session.name} lang={lang} />
+      <main dir={dirOf(lang)} className="mx-auto max-w-[560px] p-4 pb-20">
+        <h1 className="text-lg font-bold">{s.title}</h1>
+        <p className="mb-4 text-sm text-[var(--mute)]">
+          {stores.length} {s.count}
+        </p>
 
         {error && (
           <div className="rounded-xl border border-[var(--warn)] bg-[var(--warn-soft)] p-4 text-sm text-[var(--warn)]">
-            تعذّر تحميل الأسواق. حاول مرة ثانية.
+            {s.failed}
           </div>
         )}
 
         {!error && stores.length === 0 && (
           <div className="rounded-xl border border-[var(--line)] bg-white p-6 text-center text-sm text-[var(--mute)]">
-            ما فيه أسواق مربوطة بهذا الرقم.
+            {s.empty}
           </div>
         )}
 

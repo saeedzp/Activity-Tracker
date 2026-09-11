@@ -130,6 +130,24 @@ export const CATEGORIES = [
 
 export type Category = (typeof CATEGORIES)[number];
 
+/**
+ * A stored value in the reader's language.
+ *
+ * English needs no dictionary: the stored value is already English, and it is
+ * the one Mars reads. Only Arabic is a translation.
+ */
+export function statusText(lang: "ar" | "en", status: string): string {
+  return lang === "ar" ? STATUS_AR[status as Status] ?? status : status;
+}
+
+export function reasonText(lang: "ar" | "en", code: string): string {
+  return lang === "ar" ? REASON_AR[code] ?? code : code;
+}
+
+export function displayTypeText(lang: "ar" | "en", type: string): string {
+  return lang === "ar" ? displayTypeAr(type) : type;
+}
+
 export const MATCH_METHODS = ["exact", "fuzzy", "manual", "unlinked"] as const;
 export type MatchMethod = (typeof MATCH_METHODS)[number];
 

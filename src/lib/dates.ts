@@ -71,4 +71,9 @@ export function formatMonthEn(value: string | null | undefined): string {
   return name ? `${name} ${year}` : value;
 }
 
+/** The date in the reader's language. */
+export function formatDate(lang: "ar" | "en", iso: string | null | undefined): string {
+  return lang === "ar" ? formatDateAr(iso) : formatDateEn(iso);
+}
+
 export { MONTHS_AR, MONTHS_EN };

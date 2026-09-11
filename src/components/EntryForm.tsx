@@ -5,12 +5,13 @@ import { useRouter } from "next/navigation";
 import {
   asksCustomPosm,
   DISPLAY_TYPES,
-  displayTypeAr,
-  reasonAr,
+  displayTypeText,
   reasonCodesFor,
+  reasonText,
   type Status,
 } from "@/lib/domain";
-import { formatDateAr, todayIso } from "@/lib/dates";
+import { formatDate, todayIso } from "@/lib/dates";
+import { t, type Lang } from "@/lib/i18n";
 import { PhotoPicker } from "./PhotoPicker";
 import type { PreparedPhoto } from "@/lib/photo";
 
@@ -36,9 +37,9 @@ export interface PlanogramOption {
  * implementation — matches how the job is actually done.
  */
 const ANSWERS = [
-  { key: "yes", label: "نعم، دخل السوق", status: "Implemented" },
-  { key: "no", label: "لا، ما دخل", status: "Not Implemented" },
-  { key: "other", label: "دخل سوق آخر", status: "Implemented in another store" },
+  { key: "yes", label: "answerYes", status: "Implemented" },
+  { key: "no", label: "answerNo", status: "Not Implemented" },
+  { key: "other", label: "answerOther", status: "Implemented in another store" },
 ] as const;
 
 type AnswerKey = (typeof ANSWERS)[number]["key"];
@@ -49,13 +50,16 @@ export function EntryForm({
   storeName,
   activities,
   planograms = [],
+  lang,
 }: {
   storeId: string;
   storeName: string;
   activities: ActivityOption[];
   planograms?: PlanogramOption[];
+  lang: Lang;
 }) {
   const router = useRouter();
+  const s = t(lang).entry;
   const [step, setStep] = useState<Step>("form");
   const [activityId, setActivityId] = useState("");
   const [displayType, setDisplayType] = useState("");
@@ -132,12 +136,12 @@ export function EntryForm({
       try {
         res = await fetch("/api/photos", { method: "POST", body: form });
       } catch {
-        setError("تعذّر رفع الصور، تأكد من الشبكة وحاول مرة ثانية");
+        setError(s.uploadOffline);
         return null;
       }
       if (!res.ok) {
         const data = await res.json().catch(() => null);
-        setError(data?.error ?? "تعذّر رفع الصور، حاول مرة ثانية");
+        setError(data?.error ?? s.uploadFailed);
         return null;
       }
       const { key } = await res.json();
@@ -177,13 +181,13 @@ export function EntryForm({
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "تعذّر الحفظ");
+        setError(data.error ?? s.saveFailed);
         setStep("form");
         return;
       }
       setStep("done");
     } catch {
-      setError("تعذّر الاتصال، حاول مرة ثانية");
+      setError(s.offline);
       setStep("form");
     } finally {
       setBusy(false);
@@ -211,16 +215,16 @@ export function EntryForm({
         <div className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-full bg-[var(--ok-soft)] text-3xl text-[var(--ok)]">
           ✓
         </div>
-        <h1 className="text-xl font-bold">تم الإرسال</h1>
+        <h1 className="text-xl font-bold">{s.doneTitle}</h1>
         <p className="mt-2 text-sm text-[var(--mute)]">
-          {storeName} · {activity?.name} · {displayTypeAr(displayType)}
+          {storeName} · {activity?.name} · {displayTypeText(lang, displayType)}
         </p>
         <button
           type="button"
           onClick={reset}
           className="mt-6 w-full rounded-xl bg-[var(--ink)] p-3.5 font-bold text-white"
         >
-          إدخال آخر لنفس السوق
+          {s.again}
         </button>
         <button
           type="button"
@@ -230,7 +234,7 @@ export function EntryForm({
           }}
           className="mt-2 w-full rounded-xl border border-[var(--line)] bg-white p-3.5 font-bold"
         >
-          رجوع لأسواقك
+          {s.back}
         </button>
       </div>
     );
@@ -239,23 +243,26 @@ export function EntryForm({
   if (step === "review") {
     return (
       <div className="pb-24">
-        <h1 className="text-lg font-bold">تأكيد المعلومات</h1>
-        <p className="mb-4 text-sm text-[var(--mute)]">راجعها قبل الإرسال.</p>
+        <h1 className="text-lg font-bold">{s.confirmTitle}</h1>
+        <p className="mb-4 text-sm text-[var(--mute)]">{s.confirmHint}</p>
 
         <dl className="overflow-hidden rounded-xl border border-[var(--line)] bg-white">
-          <Row label="السوق" value={storeName} />
-          <Row label="الاكتفيتي" value={activity?.name ?? "—"} />
-          <Row label="البراندات" value={activity?.brands.join(" · ") ?? "—"} />
-          <Row label="المقاس" value={displayTypeAr(displayType)} />
-          <Row label="دخل الاستاند" value={ANSWERS.find((a) => a.key === answer)?.label ?? "—"} />
-          {didNot && <Row label="السبب" value={reasonAr(reasonCode)} />}
-          {needsOtherText && <Row label="تفاصيل السبب" value={otherReason.trim()} />}
-          {elsewhere && <Row label="السوق الفعلي" value={altStoreName.trim()} />}
-          {!didNot && <Row label="التاريخ" value={formatDateAr(entryDate)} />}
+          <Row label={s.store} value={storeName} />
+          <Row label={s.activity} value={activity?.name ?? "—"} />
+          <Row label={s.brands} value={activity?.brands.join(" · ") ?? "—"} />
+          <Row label={s.size} value={displayTypeText(lang, displayType)} />
+          <Row
+            label={s.entered}
+            value={answer ? s[ANSWERS.find((a) => a.key === answer)!.label] : "—"}
+          />
+          {didNot && <Row label={s.reason} value={reasonText(lang, reasonCode)} />}
+          {needsOtherText && <Row label={s.reasonDetail} value={otherReason.trim()} />}
+          {elsewhere && <Row label={s.actualStore} value={altStoreName.trim()} />}
+          {!didNot && <Row label={s.date} value={formatDate(lang, entryDate)} />}
           {needsPosmAnswer && (
-            <Row label="مواد دعائية مخصصة" value={customPosm ? "نعم" : "لا"} />
+            <Row label={s.customPosm} value={customPosm ? t(lang).common.yes : t(lang).common.no} />
           )}
-          {wentIn && <Row label="الصور" value={`${photos.length}`} />}
+          {wentIn && <Row label={s.photos} value={`${photos.length}`} />}
         </dl>
 
         {wentIn && photos.length > 0 && (
@@ -265,7 +272,7 @@ export function EntryForm({
               <img
                 key={index}
                 src={photo.dataUrl}
-                alt={`صورة ${index + 1}`}
+                alt={t(lang).photos.alt(index + 1)}
                 className="aspect-square w-full rounded-lg border border-[var(--line)] object-cover"
               />
             ))}
@@ -285,12 +292,12 @@ export function EntryForm({
           className="mt-4 w-full rounded-xl bg-[var(--ink)] p-3.5 font-bold text-white disabled:opacity-35"
         >
           {!busy
-            ? "تأكيد وإرسال"
+            ? s.send
             : photos.length > 0 && uploaded < photos.length
               // Naming the photo being sent turns a frozen button on a weak
               // signal into something that is visibly still working.
-              ? `جارٍ رفع الصور ${uploaded + 1}/${photos.length}…`
-              : "جارٍ الإرسال…"}
+              ? `${s.uploading} ${uploaded + 1}/${photos.length}…`
+              : s.sending}
         </button>
         <button
           type="button"
@@ -298,7 +305,7 @@ export function EntryForm({
           disabled={busy}
           className="mt-2 w-full rounded-xl border border-[var(--line)] bg-white p-3.5 font-bold"
         >
-          تعديل
+          {t(lang).common.edit}
         </button>
       </div>
     );
@@ -307,14 +314,14 @@ export function EntryForm({
   return (
     <div className="pb-24">
       <a href="/stores" className="mb-3 inline-block text-sm text-[var(--mute)]">
-        → رجوع لأسواقك
+        → {s.back}
       </a>
       <h1 className="text-lg font-bold">{storeName}</h1>
 
-      <Label>الاكتفيتي</Label>
+      <Label>{s.activity}</Label>
       {activities.length === 0 ? (
         <p className="rounded-xl border border-[var(--line)] bg-white p-4 text-sm text-[var(--mute)]">
-          ما فيه اكتفيتي مضاف لهذا الشهر بعد.
+          {s.noActivities}
         </p>
       ) : (
         <div className="flex flex-col gap-2">
@@ -323,7 +330,7 @@ export function EntryForm({
               key={a.id}
               type="button"
               onClick={() => setActivityId(a.id)}
-              className={`flex items-center gap-3 rounded-xl border p-3 text-right ${
+              className={`flex items-center gap-3 rounded-xl border p-3 text-start ${
                 activityId === a.id
                   ? "border-[var(--ink)] bg-[var(--ink)] text-white"
                   : "border-[var(--line)] bg-white"
@@ -368,9 +375,9 @@ export function EntryForm({
             >
               <span className="text-2xl">📄</span>
               <span className="min-w-0 flex-1">
-                <b className="block text-sm">شوف البلانوغرام</b>
+                <b className="block text-sm">{s.planogram}</b>
                 <span className="block text-xs text-[var(--mute)]">
-                  {p.title ?? "أشكال الاستاندات والأصناف اللي عليها"}
+                  {p.title ?? s.planogramHint}
                 </span>
               </span>
               <span className="text-[var(--mute)]">‹</span>
@@ -379,32 +386,32 @@ export function EntryForm({
         </div>
       )}
 
-      <Label>المقاس</Label>
+      <Label>{s.size}</Label>
       <div className="flex flex-col gap-2">
-        {DISPLAY_TYPES.map((t) => (
+        {DISPLAY_TYPES.map((type) => (
           <button
-            key={t}
+            key={type}
             type="button"
-            onClick={() => chooseDisplayType(t)}
-            className={`rounded-xl border p-3 text-right text-sm font-bold ${
-              displayType === t
+            onClick={() => chooseDisplayType(type)}
+            className={`rounded-xl border p-3 text-start text-sm font-bold ${
+              displayType === type
                 ? "border-[var(--ink)] bg-[var(--ink)] text-white"
                 : "border-[var(--line)] bg-white"
             }`}
           >
-            {displayTypeAr(t)}
+            {displayTypeText(lang, type)}
           </button>
         ))}
       </div>
 
-      <Label>هل تم إدخال الاستاند للسوق؟</Label>
+      <Label>{s.question}</Label>
       <div className="flex flex-col gap-2">
         {ANSWERS.map((a) => (
           <button
             key={a.key}
             type="button"
             onClick={() => chooseAnswer(a.key)}
-            className={`rounded-xl border p-3 text-right font-bold ${
+            className={`rounded-xl border p-3 text-start font-bold ${
               answer === a.key
                 ? "border-[var(--ink)] bg-[var(--ink)] text-white"
                 : "border-[var(--line)] bg-white"
@@ -417,7 +424,7 @@ export function EntryForm({
 
       {needsPosmAnswer && (
         <>
-          <Label>هل تم تركيب مواد دعائية مخصصة؟</Label>
+          <Label>{s.posmQuestion}</Label>
           <div className="flex gap-2">
             <button
               type="button"
@@ -428,7 +435,7 @@ export function EntryForm({
                   : "border-[var(--line)] bg-white"
               }`}
             >
-              نعم
+              {t(lang).common.yes}
             </button>
             <button
               type="button"
@@ -439,7 +446,7 @@ export function EntryForm({
                   : "border-[var(--line)] bg-white"
               }`}
             >
-              لا
+              {t(lang).common.no}
             </button>
           </div>
         </>
@@ -447,9 +454,9 @@ export function EntryForm({
 
       {wentIn && (
         <>
-          <Label>صورة الاستاند</Label>
-          <PhotoPicker photos={photos} onChange={setPhotos} requiredCount={1} />
-          <Label>تاريخ الدخول</Label>
+          <Label>{s.photoLabel}</Label>
+          <PhotoPicker photos={photos} onChange={setPhotos} requiredCount={1} lang={lang} />
+          <Label>{s.entryDate}</Label>
           <input
             type="date"
             value={entryDate}
@@ -457,14 +464,14 @@ export function EntryForm({
             className="w-full rounded-xl border border-[var(--line)] bg-white p-3"
           />
           {entryDate && (
-            <p className="mt-1.5 text-xs text-[var(--mute)]">{formatDateAr(entryDate)}</p>
+            <p className="mt-1.5 text-xs text-[var(--mute)]">{formatDate(lang, entryDate)}</p>
           )}
         </>
       )}
 
       {didNot && (
         <>
-          <Label>وش السبب؟</Label>
+          <Label>{s.reasonQuestion}</Label>
           <div className="flex flex-wrap gap-2">
             {reasonCodesFor("Not Implemented").map((code) => (
               <button
@@ -477,40 +484,40 @@ export function EntryForm({
                     : "border-[var(--line)] bg-white"
                 }`}
               >
-                {reasonAr(code)}
+                {reasonText(lang, code)}
               </button>
             ))}
           </div>
 
           {needsOtherText && (
             <>
-              <Label>اكتب السبب</Label>
+              <Label>{s.reasonDetail}</Label>
               <textarea
                 value={otherReason}
                 onChange={(e) => setOtherReason(e.target.value)}
-                placeholder="وضّح وش صار"
+                placeholder={s.reasonPlaceholder}
                 className="min-h-[74px] w-full rounded-xl border border-[var(--line)] bg-white p-3"
               />
             </>
           )}
 
           <p className="mt-3 rounded-lg bg-[var(--amber-soft)] px-3 py-2 text-xs text-[var(--amber)]">
-            السوق يبقى في قائمتك، وترجع تسجّل فيه لما يدخل الاستاند.
+            {s.staysOpen}
           </p>
         </>
       )}
 
       {elsewhere && (
         <>
-          <Label>اسم السوق الفعلي</Label>
+          <Label>{s.altStore}</Label>
           <input
             type="text"
             value={altStoreName}
             onChange={(e) => setAltStoreName(e.target.value)}
-            placeholder="اكتب اسم السوق اللي دخله الاستاند"
+            placeholder={s.altStorePlaceholder}
             className="w-full rounded-xl border border-[var(--line)] bg-white p-3"
           />
-          <Label>التاريخ</Label>
+          <Label>{s.date}</Label>
           <input
             type="date"
             value={entryDate}
@@ -532,7 +539,7 @@ export function EntryForm({
         disabled={!ready}
         className="mt-5 w-full rounded-xl bg-[var(--ink)] p-3.5 font-bold text-white disabled:opacity-35"
       >
-        مراجعة وإرسال
+        {s.review}
       </button>
     </div>
   );

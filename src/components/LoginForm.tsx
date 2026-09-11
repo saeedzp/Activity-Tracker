@@ -3,16 +3,19 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Logo } from "./Logo";
+import { LanguageToggle } from "./LanguageToggle";
+import { dirOf, t, type Lang } from "@/lib/i18n";
 
-export function LoginForm() {
+export function LoginForm({ lang }: { lang: Lang }) {
   const router = useRouter();
+  const s = t(lang).login;
   const [empId, setEmpId] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (!empId.trim()) return setError("اكتب رقمك الوظيفي");
+    if (!empId.trim()) return setError(s.empty);
     setBusy(true);
     setError("");
     try {
@@ -23,27 +26,31 @@ export function LoginForm() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "تعذّر الدخول");
+        setError(data.error ?? s.failed);
         return;
       }
       router.push("/stores");
       router.refresh();
     } catch {
-      setError("تعذّر الاتصال، تأكد من الشبكة");
+      setError(s.offline);
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-[560px] flex-col justify-center p-5">
+    <main
+      dir={dirOf(lang)}
+      className="mx-auto flex min-h-dvh max-w-[560px] flex-col justify-center p-5"
+    >
       <div className="mb-6 flex flex-col items-center gap-3">
         <Logo size={72} />
         <span className="text-lg font-bold">Activity Tracker</span>
+        <LanguageToggle lang={lang} tone="light" />
       </div>
 
-      <h1 className="mb-1 text-xl font-bold">سجّل دخولك</h1>
-      <p className="mb-6 text-sm text-[var(--mute)]">اكتب رقمك الوظيفي.</p>
+      <h1 className="mb-1 text-xl font-bold">{s.title}</h1>
+      <p className="mb-6 text-sm text-[var(--mute)]">{s.hint}</p>
 
       <form onSubmit={submit}>
         <input
@@ -52,7 +59,7 @@ export function LoginForm() {
           autoComplete="off"
           value={empId}
           onChange={(e) => setEmpId(e.target.value)}
-          placeholder="الرقم الوظيفي"
+          placeholder={s.placeholder}
           className="w-full rounded-xl border border-[var(--line)] bg-white p-3.5 outline-none focus:border-[var(--amber)]"
         />
         {error && (
@@ -65,7 +72,7 @@ export function LoginForm() {
           disabled={busy}
           className="mt-4 w-full rounded-xl bg-[var(--ink)] p-3.5 font-bold text-white disabled:opacity-35"
         >
-          {busy ? "لحظة…" : "دخول"}
+          {busy ? s.busy : s.submit}
         </button>
       </form>
     </main>

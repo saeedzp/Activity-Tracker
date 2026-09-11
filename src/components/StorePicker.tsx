@@ -49,7 +49,7 @@ export function StorePicker({
   }, [query, stores]);
 
   return (
-    <div className="absolute right-0 top-full z-30 mt-1 w-[320px] rounded-xl border border-[var(--line)] bg-white shadow-lg">
+    <div className="absolute end-0 top-full z-30 mt-1 w-[320px] rounded-xl border border-[var(--line)] bg-white shadow-lg">
       <div className="border-b border-[var(--line)] p-2">
         <input
           ref={inputRef}
@@ -77,7 +77,7 @@ export function StorePicker({
                 e.preventDefault();
                 onPick(store);
               }}
-              className={`block w-full px-3 py-2 text-right text-sm hover:bg-[var(--amber-soft)] ${
+              className={`block w-full px-3 py-2 text-start text-sm hover:bg-[var(--amber-soft)] ${
                 store.id === value ? "bg-[var(--amber-soft)] font-bold" : ""
               }`}
             >

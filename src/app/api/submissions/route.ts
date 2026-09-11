@@ -81,7 +81,7 @@ export async function POST(request: Request) {
   // never rewrites what was reported at the time.
   const { data: activity } = await db
     .from("activities")
-    .select("id, month, name, brands")
+    .select("id, month, name, brands, brand_categories, effective_from, effective_to")
     .eq("id", activityId)
     .maybeSingle();
 
@@ -93,6 +93,9 @@ export async function POST(request: Request) {
     month: string | null;
     name: string | null;
     brands: string[] | null;
+    brand_categories: Record<string, string> | null;
+    effective_from: string | null;
+    effective_to: string | null;
   };
 
   const { data, error } = await db
@@ -106,6 +109,11 @@ export async function POST(request: Request) {
       month: plan.month ?? monthOf(new Date()),
       activity_name: plan.name,
       brands: plan.brands ?? [],
+      // Snapshotted with the rest of the campaign: recategorising it months
+      // later must not rewrite what was already reported and exported.
+      brand_categories: plan.brand_categories ?? {},
+      effective_from: plan.effective_from,
+      effective_to: plan.effective_to,
       display_type: displayType,
       entered: typeof body?.entered === "boolean" ? body.entered : null,
       entry_date: body?.entry_date || null,

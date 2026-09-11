@@ -25,6 +25,9 @@ const sub = (over: Partial<ExportSubmission> = {}): ExportSubmission => ({
   store_id: "AM260",
   activity_name: "Back to School",
   brands: ["Twix"],
+  brand_categories: { Twix: "Chocolate", Snickers: "Chocolate" },
+  effective_from: null,
+  effective_to: null,
   display_type: "2x2",
   entry_date: "2026-09-09",
   implementation_date: "2026-09-10",
@@ -63,12 +66,15 @@ describe("MARS_COLUMNS", () => {
 describe("marsRows", () => {
   it("maps a submission onto Mars' columns", () => {
     const [row] = marsRows([sub()], [store()]);
+    expect(cell(row, "Category")).toBe("Chocolate");
     expect(cell(row, "Brand")).toBe("Twix");
     expect(cell(row, "Display Type/Size")).toBe("2x2");
     expect(cell(row, "Promotion Description")).toBe("Back to School");
     expect(cell(row, "Store Name")).toBe("Panda Al Rawabi");
     expect(cell(row, "Tarweej Feedback")).toBe("Implemented");
-    expect(cell(row, "Implementation Date")).toBe("2026-09-10");
+    // The day the stand went in, not the day it was reported.
+    expect(cell(row, "Implementation Date")).toBe("2026-09-09");
+    expect(cell(row, "Date of Check (First)")).toBe("2026-09-10");
   });
 
   it("writes one line per brand, because their file is one line per brand", () => {
@@ -130,6 +136,54 @@ describe("marsRows", () => {
   it("gives every row the full column count", () => {
     const rows = marsRows([sub(), sub({ brands: ["A", "B"] })], [store()]);
     expect(rows.every((r) => r.length === MARS_COLUMNS.length)).toBe(true);
+  });
+});
+
+describe("the columns that used to export empty", () => {
+  it("categorises per brand, so one campaign can mix categories", () => {
+    const rows = marsRows(
+      [
+        sub({
+          brands: ["Twix", "Extra"],
+          brand_categories: { Twix: "Chocolate", Extra: "Gum" },
+        }),
+      ],
+      [store()],
+    );
+    expect(rows.map((r) => cell(r, "Category"))).toEqual(["Chocolate", "Gum"]);
+  });
+
+  it("leaves the category empty for a brand nobody categorised", () => {
+    const [row] = marsRows([sub({ brand_categories: {} })], [store()]);
+    expect(cell(row, "Category")).toBe("");
+  });
+
+  it("carries the campaign dates when Mars sent them", () => {
+    const [row] = marsRows(
+      [sub({ effective_from: "2026-09-01", effective_to: "2026-09-30" })],
+      [store()],
+    );
+    expect(cell(row, "Effective From")).toBe("2026-09-01");
+    expect(cell(row, "Effective To")).toBe("2026-09-30");
+  });
+
+  it("leaves them empty when Mars sent none", () => {
+    const [row] = marsRows([sub()], [store()]);
+    expect(cell(row, "Effective From")).toBe("");
+    expect(cell(row, "Effective To")).toBe("");
+  });
+
+  it("dates the check by when the report was filed", () => {
+    const [row] = marsRows([sub({ submitted_at: "2026-10-03T21:00:00Z" })], [store()]);
+    expect(cell(row, "Date of Check (First)")).toBe("2026-10-03");
+  });
+
+  it("falls back to the implementation date when no entry date was given", () => {
+    const [row] = marsRows(
+      [sub({ entry_date: null, implementation_date: "2026-09-12" })],
+      [store()],
+    );
+    expect(cell(row, "Implementation Date")).toBe("2026-09-12");
   });
 });
 

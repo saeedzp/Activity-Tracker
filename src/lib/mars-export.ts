@@ -43,6 +43,10 @@ export interface ExportSubmission {
   store_id: string;
   activity_name: string | null;
   brands: string[] | null;
+  /** Brand to category, snapshotted from the campaign. */
+  brand_categories: Record<string, string> | null;
+  effective_from: string | null;
+  effective_to: string | null;
   display_type: string | null;
   entry_date: string | null;
   implementation_date: string | null;
@@ -84,12 +88,14 @@ export function marsRows(
     const brands = sub.brands?.length ? sub.brands : [""];
     for (const brand of brands) {
       rows.push([
-        "", // Category — not held here yet.
+        // Per brand, because one campaign can mix chocolate with gum.
+        sub.brand_categories?.[brand] ?? "",
         brand,
         sub.display_type ?? "",
         sub.activity_name ?? "",
-        "", // Effective From — the campaign carries a month, not dates.
-        "", // Effective To
+        // Optional: Mars does not always send campaign dates.
+        sub.effective_from ?? "",
+        sub.effective_to ?? "",
         store?.account ?? "",
         store?.region ?? "",
         store?.city ?? "",
@@ -98,9 +104,11 @@ export function marsRows(
         store?.mars_code ?? store?.retailer_no ?? "",
         store?.customer_number ?? "",
         store?.name ?? sub.store_id,
-        "", // Date of Check (First) — not recorded.
+        // When the employee filed the report — server time, never the phone's.
+        sub.submitted_at?.slice(0, 10) ?? "",
         sub.status ?? "",
-        sub.implementation_date ?? sub.entry_date ?? "",
+        // The day the stand went into the store.
+        sub.entry_date ?? sub.implementation_date ?? "",
         options.withPhotos?.has(sub.id) ? "Yes" : "",
         sub.reason_code ?? "",
         // The whole point of the status: name the store it actually went into.

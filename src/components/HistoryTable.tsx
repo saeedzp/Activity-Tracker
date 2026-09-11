@@ -11,6 +11,9 @@ export interface HistoryRow {
   emp_id: string;
   activity_name: string | null;
   brands: string[] | null;
+  brand_categories: Record<string, string> | null;
+  effective_from: string | null;
+  effective_to: string | null;
   display_type: string;
   entered: boolean | null;
   entry_date: string | null;

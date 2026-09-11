@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { formatMonthEn } from "@/lib/dates";
+import { CATEGORIES } from "@/lib/domain";
 import { preparePhoto, THUMB_QUALITY, THUMB_WIDTH } from "@/lib/photo";
 
 export interface ActivityRow {
@@ -9,6 +10,10 @@ export interface ActivityRow {
   month: string;
   name: string;
   brands: string[];
+  /** Brand to Mars category. */
+  brand_categories: Record<string, string> | null;
+  effective_from: string | null;
+  effective_to: string | null;
   image: string | null;
   active: boolean;
   sort_order: number;
@@ -32,6 +37,10 @@ export function ActivityManager({
   const [name, setName] = useState("");
   const [brands, setBrands] = useState<string[]>([]);
   const [brandDraft, setBrandDraft] = useState("");
+  const [categoryDraft, setCategoryDraft] = useState<string>(CATEGORIES[0]);
+  const [categories, setCategories] = useState<Record<string, string>>({});
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
   const [image, setImage] = useState<string | null>(null);
   const imageInput = useRef<HTMLInputElement>(null);
   const [editing, setEditing] = useState<string | null>(null);
@@ -42,13 +51,26 @@ export function ActivityManager({
     const value = brandDraft.trim();
     if (!value) return;
     if (!brands.includes(value)) setBrands([...brands, value]);
+    // The category rides with the brand: Mars wants one per line, and a
+    // campaign can mix chocolate with gum.
+    setCategories({ ...categories, [value]: categoryDraft });
     setBrandDraft("");
+  }
+
+  function removeBrand(name: string) {
+    setBrands(brands.filter((b) => b !== name));
+    const next = { ...categories };
+    delete next[name];
+    setCategories(next);
   }
 
   function clear() {
     setName("");
     setBrands([]);
     setBrandDraft("");
+    setCategories({});
+    setFrom("");
+    setTo("");
     setImage(null);
     setEditing(null);
     if (imageInput.current) imageInput.current.value = "";
@@ -83,6 +105,9 @@ export function ActivityManager({
           month,
           name: name.trim(),
           brands,
+          brand_categories: categories,
+          effective_from: from,
+          effective_to: to,
           image,
           ...(editing ? { id: editing } : {}),
         }),
@@ -150,6 +175,18 @@ export function ActivityManager({
               placeholder="Twix, then Enter"
               className="w-full rounded-lg border border-[var(--line)] p-2.5 text-sm"
             />
+            <select
+              value={categoryDraft}
+              onChange={(e) => setCategoryDraft(e.target.value)}
+              aria-label="Category"
+              className="rounded-lg border border-[var(--line)] bg-white p-2.5 text-sm"
+            >
+              {CATEGORIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
             <button
               type="button"
               onClick={addBrand}
@@ -158,6 +195,10 @@ export function ActivityManager({
               +
             </button>
           </div>
+          <span className="mt-1 block text-[11px] text-[var(--mute)]">
+            Pick the category before adding the brand — it becomes the Category
+            column in the Mars export.
+          </span>
         </label>
 
         {brands.length > 0 && (
@@ -168,9 +209,12 @@ export function ActivityManager({
                 className="flex items-center gap-1.5 rounded-lg bg-[var(--ink)] px-2.5 py-1 text-xs font-bold text-white"
               >
                 {b}
+                {categories[b] && (
+                  <span className="font-normal opacity-60">{categories[b]}</span>
+                )}
                 <button
                   type="button"
-                  onClick={() => setBrands(brands.filter((x) => x !== b))}
+                  onClick={() => removeBrand(b)}
                   aria-label={`Remove ${b}`}
                   className="opacity-70"
                 >
@@ -180,6 +224,30 @@ export function ActivityManager({
             ))}
           </div>
         )}
+
+        <div className="mb-3 grid grid-cols-2 gap-2">
+          <label className="block">
+            <span className="mb-1 block text-xs text-[var(--mute)]">Effective from</span>
+            <input
+              type="date"
+              value={from}
+              onChange={(e) => setFrom(e.target.value)}
+              className="w-full rounded-lg border border-[var(--line)] p-2.5 text-sm"
+            />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-xs text-[var(--mute)]">Effective to</span>
+            <input
+              type="date"
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+              className="w-full rounded-lg border border-[var(--line)] p-2.5 text-sm"
+            />
+          </label>
+          <span className="col-span-2 -mt-1 text-[11px] text-[var(--mute)]">
+            Optional — Mars does not always send dates.
+          </span>
+        </div>
 
         <div className="mb-3">
           <span className="mb-1 block text-xs text-[var(--mute)]">Activity photo (optional)</span>
@@ -305,6 +373,9 @@ export function ActivityManager({
                         setEditing(r.id);
                         setName(r.name);
                         setBrands(r.brands);
+                        setCategories(r.brand_categories ?? {});
+                        setFrom(r.effective_from ?? "");
+                        setTo(r.effective_to ?? "");
                         setImage(r.image);
                       }}
                       className="text-[var(--mute)] underline"

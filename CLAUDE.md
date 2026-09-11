@@ -266,12 +266,29 @@ West - Mak Unit · West - Mad Unit`.
 - `Pic Yes/No` = `Yes` فقط إذا كانت هناك صورة محفوظة فعلاً.
 - ثلاثة أعمدة الامتثال الأخيرة تُترك فاضية — فاضية في كل صفوف ملفهم أصلاً.
 
-**أعمدة ما زالت فاضية لأن بياناتها غير مخزَّنة**: `Category` و`Effective From`
-و`Effective To` و`Date of Check (First)`.
+### مصدر كل عمود
 
-**تنبيه عن المناطق**: مارس يفصل الغربية إلى `West - Jed Unit` و`Mak Unit`
-و`Mad Unit`، ونحن ندمجها في `west` (قاعدة `Madinah → West`). التصدير يكتب
-المخزَّن، فالتفصيل يحتاج قراراً.
+| العمود | من أين |
+|---|---|
+| `Category` | **من البراند** — `activities.brand_categories` |
+| `Effective From` / `To` | تواريخ الحملة، **اختيارية** |
+| `Date of Check (First)` | `submitted_at` — يوم رفع الموظف للتقرير |
+| `Implementation Date` | `entry_date` — يوم دخول الاستاند للسوق |
+| `Additonal Comments` | اسم السوق الفعلي عند `Implemented in another store` |
+
+`CATEGORIES` في `src/lib/domain.ts`: `Chocolate · Gum · Confections · Pet Care ·
+Healthy` — **مأخوذة من ملف مارس نفسه** (ولذلك `Confections` لا `Confectionery`).
+فئة غير معروفة تُرفض عند الحفظ ولا تصل مارس.
+
+**الفئة للبراند لا للحملة**: ملفهم سطر لكل براند بفئته، وحملة واحدة تخلط
+شوكولاتة مع علك. تُخزَّن كائناً مفتاحه البراند لا مصفوفة موازية، فلا تنفصل عن
+قائمة البراندات بصمت.
+
+تواريخ الحملة **اختيارية** لأن مارس لا يرسلها دائماً، وحقل إجباري لا يُعرف
+جوابه يعلّم الناس كتابة شيء غير صحيح.
+
+والثلاثة تُنسخ على الإدخال (`submissions.brand_categories` و`effective_from`
+و`effective_to`) — إعادة تصنيف حملة بعد شهور يجب ألا تعيد كتابة ما صُدِّر.
 
 ## النشر — Cloudflare Pages دائماً
 

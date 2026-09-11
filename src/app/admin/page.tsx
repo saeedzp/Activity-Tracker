@@ -26,7 +26,8 @@ export const runtime = "edge";
 export const dynamic = "force-dynamic";
 
 const HISTORY_SELECT =
-  "id, month, store_id, emp_id, activity_name, brands, display_type, entered, entry_date," +
+  "id, month, store_id, emp_id, activity_name, brands, brand_categories," +
+  " effective_from, effective_to, display_type, entered, entry_date," +
   " implementation_date, status, reason_code, alt_store_name, note," +
   " custom_posm, activity_id, submitted_at, approved";
 
@@ -78,7 +79,7 @@ type Db = ReturnType<typeof serviceClient>;
 async function ActivitiesPanel({ db, month }: { db: Db; month: string }) {
   const { data } = await db
     .from("activities")
-    .select("id, month, name, brands, image, active, sort_order")
+    .select("id, month, name, brands, brand_categories, effective_from, effective_to, image, active, sort_order")
     .eq("month", month)
     .order("sort_order")
     .order("name");

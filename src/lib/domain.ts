@@ -113,6 +113,23 @@ export function displayTypeAr(type: string): string {
   return DISPLAY_TYPE_AR[type as DisplayType] ?? type;
 }
 
+/**
+ * The Category column Mars reads, one per brand.
+ *
+ * Taken from the values in their own file rather than invented, because a
+ * category they do not recognise is a row they cannot group. "Confections" is
+ * spelt the way it is spelt in their August workbook.
+ */
+export const CATEGORIES = [
+  "Chocolate",
+  "Gum",
+  "Confections",
+  "Pet Care",
+  "Healthy",
+] as const;
+
+export type Category = (typeof CATEGORIES)[number];
+
 export const MATCH_METHODS = ["exact", "fuzzy", "manual", "unlinked"] as const;
 export type MatchMethod = (typeof MATCH_METHODS)[number];
 

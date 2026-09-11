@@ -6,7 +6,7 @@ import {
   nameSimilarity,
   nameTokens,
   normalizeAccount,
-  normalizeRegion,
+  marsRegion,
   normalizeText,
   rankCandidates,
   type StoreRecord,
@@ -43,8 +43,8 @@ describe("normalization", () => {
   });
 
   it("maps Madinah region to West", () => {
-    expect(normalizeRegion("Madinah")).toBe("west");
-    expect(normalizeRegion("South")).toBe("south");
+    expect(marsRegion("West", "Medina")).toBe("West - Mad Unit");
+    expect(marsRegion("South", "Abha")).toBe("South");
   });
 
   it("drops generic words from store names", () => {
@@ -199,5 +199,44 @@ describe("stage 2 store number sources", () => {
       dirty,
     );
     expect(result.match_method).not.toBe("exact");
+  });
+});
+
+describe("marsRegion", () => {
+  it("splits the west by city, the way Mars does", () => {
+    expect(marsRegion("West", "Jeddah")).toBe("West - Jed Unit");
+    expect(marsRegion("West", "Makkah")).toBe("West - Mak Unit");
+    expect(marsRegion("West", "Medina")).toBe("West - Mad Unit");
+  });
+
+  it("places a city by its province, not its name", () => {
+    // Taif is in the Makkah province; Yanbu is in the Madinah province.
+    expect(marsRegion("West", "Taif")).toBe("West - Mak Unit");
+    expect(marsRegion("West", "Yanbu")).toBe("West - Mad Unit");
+  });
+
+  it("reads a unit code in the Region column itself", () => {
+    expect(marsRegion("JED", "")).toBe("West - Jed Unit");
+    expect(marsRegion("MDN", "")).toBe("West - Mad Unit");
+  });
+
+  it("keeps a value already written Mars' way", () => {
+    expect(marsRegion("West - Mak Unit", "")).toBe("West - Mak Unit");
+  });
+
+  it("names the other regions as Mars names them", () => {
+    expect(marsRegion("south", "")).toBe("South");
+    expect(marsRegion("Central", "")).toBe("Center");
+    expect(marsRegion("eastern", "")).toBe("East");
+  });
+
+  it("refuses to guess a unit for an unplaceable western city", () => {
+    // A visibly incomplete value can be fixed; a confidently wrong one cannot.
+    expect(marsRegion("West", "Somewhere")).toBe("West");
+  });
+
+  it("hands back an unknown region rather than dropping it", () => {
+    expect(marsRegion("Gulf", "")).toBe("Gulf");
+    expect(marsRegion("", "")).toBe("");
   });
 });

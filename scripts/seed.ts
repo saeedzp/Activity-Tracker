@@ -11,7 +11,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { parseCsvRecords } from "../src/lib/csv";
-import { normalizeAccount, normalizeRegion } from "../src/lib/match";
+import { marsRegion, normalizeAccount } from "../src/lib/match";
 import { serviceClient } from "../src/lib/supabase";
 
 const CSV_PATH = process.env.SEED_CSV ?? path.join(process.cwd(), "seed", "stores.csv");
@@ -75,7 +75,7 @@ export function buildRows(records: Record<string, string>[]): {
       // Accounts are unified on the way in, so matching never has to guess later.
       account: normalizeAccount(pick(rec, "Account Name", "Account Code")),
       city: pick(rec, "City") || null,
-      region: normalizeRegion(pick(rec, "Region")) || null,
+      region: marsRegion(pick(rec, "Region"), pick(rec, "City")) || null,
       mars_code: usableNumber(pick(rec, "MARS Code")),
       // Kept only when it is a real number: the source has 0 and stray text here.
       retailer_no: usableNumber(pick(rec, "Retailer NO.", "Retailer No")),

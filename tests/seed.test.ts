@@ -19,8 +19,8 @@ describe("seed builder", () => {
     expect(stores[1].account).toBe("bin dawood");
   });
 
-  it("normalizes the region", () => {
-    expect(stores[0].region).toBe("west");
+  it("stores the region the way Mars writes it", () => {
+    expect(stores[0].region).toBe("West - Jed Unit");
   });
 
   it("derives users and dedupes a shared team leader", () => {

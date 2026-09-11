@@ -8,7 +8,7 @@
  * Pure on purpose — no database, no request — so the rules can be tested.
  */
 
-import { normalizeAccount, normalizeRegion } from "./match";
+import { marsRegion, normalizeAccount } from "./match";
 
 /** A store as the app stores it. */
 export interface StoreRecordRow {
@@ -90,7 +90,9 @@ export function toStore(rec: Record<string, string>): StoreRecordRow | null {
     name: pick(rec, "Store Name", "MARS Store") || id,
     account: normalizeAccount(pick(rec, "Account Name", "Account Code")),
     city: pick(rec, "City") || null,
-    region: normalizeRegion(pick(rec, "Region")) || null,
+    // The city decides the western unit; the Region column usually just
+    // says "West".
+    region: marsRegion(pick(rec, "Region"), pick(rec, "City")) || null,
     mars_code: usableNumber(pick(rec, "MARS Code")),
     retailer_no: usableNumber(pick(rec, "Retailer NO.", "Retailer No")),
     // Not in the file yet; kept null until it is, and picked up automatically

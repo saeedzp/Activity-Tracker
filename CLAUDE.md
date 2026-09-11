@@ -146,7 +146,22 @@ Not Implemented              → Account Restriction | Contract Issue | OOS | Sp
 
 توحيد إجباري قبل أي مقارنة:
 `PANDA/Panda/panda → panda` · `BD/Bindawood/Bin Dawood → bin dawood` ·
-`Tier 3 → other mt` · قص المسافات الزائدة · `Madinah → West`.
+`Tier 3 → other mt` · قص المسافات الزائدة.
+
+## المناطق — بأسماء مارس
+
+`MARS_REGIONS`: `Center · East · North · South · West - Jed Unit ·
+West - Mak Unit · West - Mad Unit`.
+
+**تُخزَّن بأسماء مارس مباشرة** (`marsRegion` في `src/lib/match.ts`) لا تُترجم عند
+التصدير: قيمة واحدة معتمدة، بلا خطوة تحويل تتقادم. كنا ندمج الغربية في `west`
+وهم يفصلونها ثلاثاً، فكان كل صف غربي في التصدير غلطاً عندهم.
+
+**المدينة هي التي تحدّد الوحدة**، لأن عمود `Region` في ملف الروت يكتب `West`
+غالباً. والتقسيم **بالإمارة**: الطائف تتبع مكة، وينبع تتبع المدينة.
+
+سوق غربي مدينته غير معروفة يبقى `West` بلا وحدة — **ناقص ظاهر خير من خطأ
+واثق**، والناقص يُصلَّح.
 
 ## الروت — رفع من الواجهة
 

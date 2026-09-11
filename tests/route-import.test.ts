@@ -12,7 +12,7 @@ const store = (over: Partial<StoreRecordRow> & { id: string }): StoreRecordRow =
   name: `Store ${over.id}`,
   account: "panda",
   city: "Jeddah",
-  region: "west",
+  region: "West - Jed Unit",
   mars_code: "100001",
   customer_number: null,
   retailer_no: null,
@@ -41,7 +41,8 @@ describe("toStore", () => {
   it("normalizes the account and region on the way in", () => {
     const out = toStore(row)!;
     expect(out.account).toBe("panda");
-    expect(out.region).toBe("west");
+    // The region is stored the way Mars writes it, split by city.
+    expect(out.region).toBe("West - Mad Unit");
   });
 
   it("drops a retailer number of zero rather than storing it", () => {

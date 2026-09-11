@@ -105,11 +105,84 @@ export function normalizeAccount(value: unknown): string {
 }
 
 /** `Madinah` is reported as its own region by Mars but belongs to West for us. */
+/**
+ * Mars' own region names, which are what we store.
+ *
+ * They split the west into three units and we used to flatten all of it into
+ * one "west" — so every western row in the export was wrong for them. Their
+ * naming is adopted wholesale instead: the file we send matches the file they
+ * send, without a translation step that can drift.
+ */
+export const MARS_REGIONS = [
+  "Center",
+  "East",
+  "North",
+  "South",
+  "West - Jed Unit",
+  "West - Mak Unit",
+  "West - Mad Unit",
+] as const;
+
+/** Which western unit a city belongs to, by the province it sits in. */
+const WEST_UNIT: Record<string, string> = {
+  jeddah: "West - Jed Unit",
+  jed: "West - Jed Unit",
+  makkah: "West - Mak Unit",
+  mecca: "West - Mak Unit",
+  mak: "West - Mak Unit",
+  // Taif is in the Makkah province, so it is covered by the Makkah unit.
+  taif: "West - Mak Unit",
+  medina: "West - Mad Unit",
+  madinah: "West - Mad Unit",
+  "al madinah": "West - Mad Unit",
+  mdn: "West - Mad Unit",
+  // Yanbu sits in the Madinah province.
+  yanbu: "West - Mad Unit",
+};
+
+const PLAIN_REGION: Record<string, string> = {
+  center: "Center",
+  central: "Center",
+  centre: "Center",
+  east: "East",
+  eastern: "East",
+  north: "North",
+  northern: "North",
+  south: "South",
+  southern: "South",
+};
+
+/**
+ * The region as Mars writes it.
+ *
+ * The city decides the western unit, because the route file's own Region
+ * column usually just says "West". A western row whose city we cannot place
+ * stays plain "West" rather than being assigned to a unit on a guess — a
+ * visibly incomplete value can be fixed, a confidently wrong one cannot.
+ */
+export function marsRegion(region: unknown, city?: unknown): string {
+  const r = normalizeText(region);
+  const c = normalizeText(city);
+
+  // Already written the way Mars writes it, or close enough to recognise.
+  const direct = Object.values(WEST_UNIT).find(
+    (unit) => normalizeText(unit) === r,
+  );
+  if (direct) return direct;
+
+  // The Region column sometimes carries the unit code itself.
+  if (WEST_UNIT[r]) return WEST_UNIT[r];
+
+  if (r.startsWith("west")) return WEST_UNIT[c] ?? "West";
+  if (PLAIN_REGION[r]) return PLAIN_REGION[r];
+
+  // Unknown: hand it back as written rather than dropping it silently.
+  return String(region ?? "").trim();
+}
+
+/** @deprecated Kept for the older seeding path; prefer marsRegion. */
 export function normalizeRegion(value: unknown): string {
-  const t = normalizeText(value);
-  if (!t) return "";
-  if (t === "madinah" || t === "al madinah" || t === "medina") return "west";
-  return t;
+  return marsRegion(value);
 }
 
 /** A store number of "", "0", "0000" or non-numeric junk must never match. */

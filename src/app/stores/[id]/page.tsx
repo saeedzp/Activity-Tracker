@@ -43,11 +43,11 @@ export default async function StoreEntryPage({
       .eq("active", true)
       .order("sort_order")
       .order("name"),
-    // This month's drawings, so the employee can see the stand they are being
-    // asked about without leaving the form.
+    // This month's drawings, so the employee can see what arrived without
+    // leaving the form.
     db
       .from("planograms")
-      .select("id, activity_id, display_type, title, r2_key")
+      .select("id, activity_id, title, r2_key")
       .eq("month", monthOf(new Date())),
   ]);
   const { data } = storeResult;

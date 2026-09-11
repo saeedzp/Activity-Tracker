@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { serviceClient } from "@/lib/supabase";
 import { isAdmin } from "@/lib/admin";
 import { photoBucket } from "@/lib/r2";
-import { DISPLAY_TYPES } from "@/lib/domain";
 import {
   looksLikePdf,
   MAX_PLANOGRAM_BYTES,
@@ -13,9 +12,15 @@ import {
 // Cloudflare Pages runs every route on the edge runtime.
 export const runtime = "edge";
 
-const SELECT = "id, activity_id, month, display_type, title, r2_key, bytes, created_at";
+const SELECT = "id, activity_id, month, title, r2_key, bytes, created_at";
 
-/** Add a planogram to a campaign, optionally for one size only. */
+/**
+ * Add a planogram to a campaign.
+ *
+ * One drawing covers the campaign: it arrives showing every stand in it, and
+ * the employee finds theirs inside. A campaign can carry more than one file
+ * when more than one is sent.
+ */
 export async function POST(request: Request) {
   if (!(await isAdmin())) {
     return NextResponse.json({ error: "Passcode required" }, { status: 401 });
@@ -28,15 +33,8 @@ export async function POST(request: Request) {
   const file = form?.get("file");
   const activityId = String(form?.get("activity_id") ?? "").trim();
   const title = String(form?.get("title") ?? "").trim() || null;
-  const rawType = String(form?.get("display_type") ?? "").trim();
-
   if (!(file instanceof File) || !activityId) {
     return NextResponse.json({ error: "Choose an activity and a file" }, { status: 400 });
-  }
-  // Empty means the drawing covers every size in the campaign.
-  const displayType = rawType === "" ? null : rawType;
-  if (displayType && !(DISPLAY_TYPES as readonly string[]).includes(displayType)) {
-    return NextResponse.json({ error: "Unknown size" }, { status: 400 });
   }
   if (file.size > MAX_PLANOGRAM_BYTES) {
     return NextResponse.json({ error: "File too large" }, { status: 413 });
@@ -75,7 +73,6 @@ export async function POST(request: Request) {
     .insert({
       activity_id: plan.id,
       month: plan.month,
-      display_type: displayType,
       title,
       r2_key: key,
       bytes: file.size,

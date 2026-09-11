@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { DISPLAY_TYPES } from "@/lib/domain";
 import { formatDateEn, formatMonthEn } from "@/lib/dates";
 import { formatBytesEn } from "@/lib/photo";
 import { MAX_PLANOGRAM_BYTES } from "@/lib/planogram";
@@ -10,7 +9,6 @@ export interface PlanogramRow {
   id: string;
   activity_id: string;
   month: string | null;
-  display_type: string | null;
   title: string | null;
   r2_key: string;
   bytes: number | null;
@@ -25,10 +23,10 @@ export interface ActivityOption {
 /**
  * The month's planograms, and the archive of every month before it.
  *
- * The drawing is uploaded against a campaign, and against one size when a
- * campaign ships more than one stand. It is kept rather than consumed: "what
- * did the 2x2 look like in September" gets asked long after September, so the
- * list below the form reaches across every month, not only the one on screen.
+ * One drawing per campaign — it arrives showing every stand in it, and the
+ * employee finds theirs inside. It is kept rather than consumed: "what did
+ * September's stand look like" gets asked long after September, so the list
+ * below the form reaches across every month, not only the one on screen.
  */
 export function PlanogramManager({
   month,
@@ -44,7 +42,6 @@ export function PlanogramManager({
   const input = useRef<HTMLInputElement>(null);
   const [list, setList] = useState(rows);
   const [activityId, setActivityId] = useState(activities[0]?.id ?? "");
-  const [displayType, setDisplayType] = useState("");
   const [title, setTitle] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -61,7 +58,6 @@ export function PlanogramManager({
       const form = new FormData();
       form.append("file", file);
       form.append("activity_id", activityId);
-      form.append("display_type", displayType);
       form.append("title", title.trim());
       const res = await fetch("/api/planograms", { method: "POST", body: form });
       const data = await res.json();
@@ -86,7 +82,7 @@ export function PlanogramManager({
   const q = query.trim().toLowerCase();
   const filtered = q
     ? list.filter((r) =>
-        [activityNames[r.activity_id] ?? "", r.display_type ?? "", r.title ?? "", r.month ?? ""]
+        [activityNames[r.activity_id] ?? "", r.title ?? "", r.month ?? ""]
           .join(" ")
           .toLowerCase()
           .includes(q),
@@ -98,8 +94,8 @@ export function PlanogramManager({
       <section className="rounded-xl border border-[var(--line)] bg-white p-4">
         <h2 className="mb-1 font-bold">Add planogram</h2>
         <p className="mb-4 text-xs text-[var(--mute)]">
-          A PDF of the stand and the SKUs on it, for {formatMonthEn(month)}. The
-          employee opens it while building the stand.
+          A PDF of the stands and the SKUs on them, for {formatMonthEn(month)}.
+          The employee opens it before choosing a size.
         </p>
 
         <label className="mb-3 block">
@@ -116,25 +112,6 @@ export function PlanogramManager({
               </option>
             ))}
           </select>
-        </label>
-
-        <label className="mb-3 block">
-          <span className="mb-1 block text-xs text-[var(--mute)]">Size</span>
-          <select
-            value={displayType}
-            onChange={(e) => setDisplayType(e.target.value)}
-            className="w-full rounded-lg border border-[var(--line)] bg-white p-2.5 text-sm"
-          >
-            <option value="">All sizes</option>
-            {DISPLAY_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-          <span className="mt-1 block text-[11px] text-[var(--mute)]">
-            Leave on “All sizes” when one drawing covers the whole campaign.
-          </span>
         </label>
 
         <label className="mb-3 block">
@@ -179,7 +156,7 @@ export function PlanogramManager({
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search activity, size or month"
+            placeholder="Search activity, title or month"
             className="min-w-[220px] rounded-lg border border-[var(--line)] bg-white p-2 text-sm"
           />
         </div>
@@ -197,10 +174,7 @@ export function PlanogramManager({
               >
                 <span className="text-2xl">📄</span>
                 <div className="min-w-0 flex-1">
-                  <b className="block">
-                    {activityNames[r.activity_id] ?? "—"}
-                    {r.display_type ? ` · ${r.display_type}` : " · All sizes"}
-                  </b>
+                  <b className="block">{activityNames[r.activity_id] ?? "—"}</b>
                   <span className="text-xs text-[var(--mute)]">
                     {formatMonthEn(r.month)}
                     {r.title ? ` · ${r.title}` : ""}

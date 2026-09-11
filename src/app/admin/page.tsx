@@ -166,7 +166,7 @@ async function PlanogramsPanel({ db, month }: { db: Db; month: string }) {
     db.from("activities").select("id, name"),
     db
       .from("planograms")
-      .select("id, activity_id, month, display_type, title, r2_key, bytes, created_at")
+      .select("id, activity_id, month, title, r2_key, bytes, created_at")
       .order("created_at", { ascending: false })
       .limit(2000),
   ]);
@@ -180,7 +180,7 @@ async function PlanogramsPanel({ db, month }: { db: Db; month: string }) {
     <>
       <PanelHead
         title="Planograms"
-        note="The drawing of the stand, for the employee to build against."
+        note="The campaign’s drawing, for the employee to build against."
       >
         <MonthPicker month={month} tab="planograms" />
       </PanelHead>

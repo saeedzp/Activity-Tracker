@@ -22,12 +22,10 @@ export interface ActivityOption {
   image: string | null;
 }
 
-/** The drawing of the stand, for one campaign and — sometimes — one size. */
+/** The campaign's drawing: every stand in it, for the employee to find theirs. */
 export interface PlanogramOption {
   id: string;
   activity_id: string;
-  /** null means the drawing covers every size in the campaign. */
-  display_type: string | null;
   title: string | null;
   r2_key: string;
 }
@@ -73,16 +71,10 @@ export function EntryForm({
   const [error, setError] = useState("");
 
   const activity = activities.find((a) => a.id === activityId);
-  /**
-   * The drawing for exactly this size when there is one, otherwise the
-   * campaign-wide drawing. A campaign shipping a 2x2 and a gondola has one for
-   * each; a campaign with a single drawing leaves the size empty.
-   */
-  const planogram =
-    activityId && displayType
-      ? planograms.find((p) => p.activity_id === activityId && p.display_type === displayType) ??
-        planograms.find((p) => p.activity_id === activityId && p.display_type === null)
-      : undefined;
+  /** The campaign's drawings — usually one, sometimes more than one file. */
+  const activityPlanograms = activityId
+    ? planograms.filter((p) => p.activity_id === activityId)
+    : [];
   const status = (ANSWERS.find((a) => a.key === answer)?.status ?? "") as Status | "";
   const wentIn = answer === "yes";
   const didNot = answer === "no";
@@ -362,6 +354,31 @@ export function EntryForm({
         </div>
       )}
 
+      {activityPlanograms.length > 0 && (
+        // Before the size, not after it: the drawing is what tells the employee
+        // which stand arrived, so they read it and then say which one it is.
+        <div className="mt-4 flex flex-col gap-2">
+          {activityPlanograms.map((p) => (
+            <a
+              key={p.id}
+              href={`/api/planograms/${p.r2_key}`}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-3 rounded-xl border border-[var(--amber)] bg-[var(--amber-soft)] p-3.5"
+            >
+              <span className="text-2xl">📄</span>
+              <span className="min-w-0 flex-1">
+                <b className="block text-sm">شوف البلانوغرام</b>
+                <span className="block text-xs text-[var(--mute)]">
+                  {p.title ?? "أشكال الاستاندات والأصناف اللي عليها"}
+                </span>
+              </span>
+              <span className="text-[var(--mute)]">‹</span>
+            </a>
+          ))}
+        </div>
+      )}
+
       <Label>المقاس</Label>
       <div className="flex flex-col gap-2">
         {DISPLAY_TYPES.map((t) => (
@@ -379,29 +396,6 @@ export function EntryForm({
           </button>
         ))}
       </div>
-
-      {planogram && (
-        // Placed between the size and the question: by now the employee knows
-        // which stand they are looking at, and they are about to say whether
-        // they built it.
-        <a
-          href={`/api/planograms/${planogram.r2_key}`}
-          target="_blank"
-          rel="noreferrer"
-          className="mt-4 flex items-center gap-3 rounded-xl border border-[var(--amber)] bg-[var(--amber-soft)] p-3.5"
-        >
-          <span className="text-2xl">📄</span>
-          <span className="min-w-0 flex-1">
-            <b className="block text-sm">شوف البلانوغرام</b>
-            <span className="block text-xs text-[var(--mute)]">
-              {planogram.title
-                ? planogram.title
-                : "شكل الاستاند والأصناف اللي عليه"}
-            </span>
-          </span>
-          <span className="text-[var(--mute)]">‹</span>
-        </a>
-      )}
 
       <Label>هل تم إدخال الاستاند للسوق؟</Label>
       <div className="flex flex-col gap-2">

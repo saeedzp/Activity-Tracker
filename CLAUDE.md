@@ -233,8 +233,30 @@ Not Implemented              → Account Restriction | Contract Issue | OOS | Sp
 
 ## التصدير
 
-نفس أعمدة مارس الـ20 بالترتيب. عند `Implemented in another store` يُكتب اسم السوق
-الفعلي في `Additional Comments`.
+**نفس أعمدة مارس الـ20 بالترتيب**، زائد `Customer Number`. مصدر الحقيقة
+`src/lib/mars-export.ts` — كود صافي مختبر، وزر «Export for Mars» في تبويب السجل.
+
+- **إملاء مارس يُنسخ كما هو بأخطائه**: `Additonal Comments` و
+  `Compliance Implemantation` مكتوبان غلط في ملفهم، وتصحيحهما يعطيهم عموداً
+  لا يجدونه.
+- **صف لكل براند**: ملفهم سطر لكل (براند + مقاس + سوق)، وحملتنا تحمل عدة
+  براندات، فحملة ببراندين تصير سطرين. حملة بلا براندات تبقى سطراً واحداً ولا
+  تختفي.
+- `Store #` من `mars_code` أولاً و`retailer_no` احتياطاً.
+- `Customer Number` هو **الربط بين الروت وملفات مارس**. ليس في ملف الروت بعد،
+  ورأس العمود موجود من اليوم؛ و`OPTIONAL_COLUMNS` في `src/lib/xlsx.ts` تلتقطه
+  تلقائياً أول ما يظهر في الملف بلا تعديل كود.
+- عند `Implemented in another store` يُكتب اسم السوق الفعلي في
+  `Additonal Comments`، وفاضي في كل حالة غيرها.
+- `Pic Yes/No` = `Yes` فقط إذا كانت هناك صورة محفوظة فعلاً.
+- ثلاثة أعمدة الامتثال الأخيرة تُترك فاضية — فاضية في كل صفوف ملفهم أصلاً.
+
+**أعمدة ما زالت فاضية لأن بياناتها غير مخزَّنة**: `Category` و`Effective From`
+و`Effective To` و`Date of Check (First)`.
+
+**تنبيه عن المناطق**: مارس يفصل الغربية إلى `West - Jed Unit` و`Mak Unit`
+و`Mad Unit`، ونحن ندمجها في `west` (قاعدة `Madinah → West`). التصدير يكتب
+المخزَّن، فالتفصيل يحتاج قراراً.
 
 ## النشر — Cloudflare Pages دائماً
 

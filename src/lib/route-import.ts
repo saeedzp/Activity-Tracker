@@ -19,6 +19,7 @@ export interface StoreRecordRow {
   region: string | null;
   mars_code: string | null;
   retailer_no: string | null;
+  customer_number: string | null;
   me_id: string | null;
   me_name: string | null;
   tl_id: string | null;
@@ -40,6 +41,7 @@ export const TRACKED_FIELDS = [
   "region",
   "mars_code",
   "retailer_no",
+  "customer_number",
   "me_id",
   "me_name",
   "tl_id",
@@ -91,6 +93,9 @@ export function toStore(rec: Record<string, string>): StoreRecordRow | null {
     region: normalizeRegion(pick(rec, "Region")) || null,
     mars_code: usableNumber(pick(rec, "MARS Code")),
     retailer_no: usableNumber(pick(rec, "Retailer NO.", "Retailer No")),
+    // Not in the file yet; kept null until it is, and picked up automatically
+    // the day it appears.
+    customer_number: pick(rec, "Customer Number", "Customer No.", "Customer No") || null,
     me_id: pick(rec, "ME (1) ID", "ME ID") || null,
     me_name: pick(rec, "ME (1) Name", "ME Name") || null,
     tl_id: pick(rec, "TL ID") || null,
@@ -196,6 +201,7 @@ export const FIELD_LABELS: Record<TrackedField, string> = {
   region: "Region",
   mars_code: "Mars code",
   retailer_no: "Store no.",
+  customer_number: "Customer number",
   me_id: "Employee no.",
   me_name: "Employee name",
   tl_id: "Supervisor no.",

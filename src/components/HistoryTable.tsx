@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { formatDateEn, formatMonthEn } from "@/lib/dates";
+import { marsCsv, marsRows, type ExportStore, type ExportSubmission } from "@/lib/mars-export";
 
 export interface HistoryRow {
   id: string;
@@ -35,6 +36,10 @@ export interface StoreName {
   name: string | null;
   account: string | null;
   city: string | null;
+  region?: string | null;
+  mars_code?: string | null;
+  retailer_no?: string | null;
+  customer_number?: string | null;
 }
 
 /**
@@ -132,6 +137,29 @@ export function HistoryTable({
     ];
   }
 
+  /** The file Mars reads: their columns, their order, their spelling. */
+  function downloadMars() {
+    const withPhotos = new Set(photos.map((p) => p.submission_id));
+    const csv = marsCsv(
+      marsRows(
+        filtered as unknown as ExportSubmission[],
+        stores as unknown as ExportStore[],
+        { withPhotos },
+      ),
+    );
+    save(csv, `mars-${month || "all"}.csv`);
+  }
+
+  function save(csv: string, name: string) {
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = name;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
   function download() {
     const lines = [COLUMNS.join(",")];
     for (const row of filtered) {
@@ -141,16 +169,8 @@ export function HistoryTable({
           .join(","),
       );
     }
-    // The BOM makes Excel read the Arabic as UTF-8 rather than mojibake.
-    const blob = new Blob(["﻿" + lines.join("\n")], {
-      type: "text/csv;charset=utf-8",
-    });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `history-${month || "all"}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
+    // The BOM makes Excel read it as UTF-8 rather than mojibake.
+    save("﻿" + lines.join("\n"), `history-${month || "all"}.csv`);
   }
 
   return (
@@ -186,11 +206,21 @@ export function HistoryTable({
         />
         <button
           type="button"
-          onClick={download}
+          onClick={downloadMars}
           disabled={filtered.length === 0}
+          title="Mars' own 20 columns, plus Customer Number"
           className="rounded-lg bg-[var(--ink)] px-4 py-2 text-sm font-bold text-white disabled:opacity-35"
         >
-          Export {filtered.length}
+          Export for Mars ({filtered.length})
+        </button>
+        <button
+          type="button"
+          onClick={download}
+          disabled={filtered.length === 0}
+          title="Every field this app records, for your own review"
+          className="rounded-lg border border-[var(--line)] bg-white px-4 py-2 text-sm font-bold disabled:opacity-35"
+        >
+          Export full detail
         </button>
       </form>
 

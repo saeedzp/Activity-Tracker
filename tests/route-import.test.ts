@@ -14,6 +14,7 @@ const store = (over: Partial<StoreRecordRow> & { id: string }): StoreRecordRow =
   city: "Jeddah",
   region: "west",
   mars_code: "100001",
+  customer_number: null,
   retailer_no: null,
   me_id: "10001",
   me_name: "Employee One",

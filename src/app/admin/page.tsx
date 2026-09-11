@@ -119,7 +119,7 @@ async function HistoryPanel({ db, month }: { db: Db; month: string }) {
     query,
     // Every store, including switched-off ones: history has to resolve a store
     // that has since closed.
-    db.from("stores").select("id, name, account, city"),
+    db.from("stores").select("id, name, account, city, region, mars_code, retailer_no, customer_number"),
     db.from("submissions").select("month").not("month", "is", null),
     // Joined in the browser rather than per row: one query for the page beats
     // one per submission.

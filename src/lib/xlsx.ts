@@ -17,6 +17,17 @@ export const COLUMNS = [
   "ME (1) Name", "TL ID", "TL Name", "Lat", "Long",
 ] as const;
 
+/**
+ * Read when present, ignored when absent.
+ *
+ * A column the route file does not carry yet must not make today's file
+ * invalid. Listing it here means the day it appears it is picked up with no
+ * change to this code.
+ */
+export const OPTIONAL_COLUMNS = ["Customer Number"] as const;
+
+const ALL_COLUMNS = [...COLUMNS, ...OPTIONAL_COLUMNS] as const;
+
 /** Values Excel writes for a failed lookup; they are not real data. */
 const EXCEL_ERRORS = new Set(["#N/A", "#REF!", "#VALUE!", "#NAME?", "#DIV/0!", "#NULL!"]);
 
@@ -116,7 +127,7 @@ export function convert(grid: string[][]): { csv: string; report: ConvertReport 
   let identicalDuplicates = 0;
 
   for (const rec of records) {
-    for (const col of COLUMNS) {
+    for (const col of ALL_COLUMNS) {
       if (EXCEL_ERRORS.has(rec[col])) {
         excelErrors.push({ id: rec["STORE ID"], column: col });
         rec[col] = "";
@@ -130,7 +141,7 @@ export function convert(grid: string[][]): { csv: string; report: ConvertReport 
       byId.set(id, rec);
       continue;
     }
-    const differing = COLUMNS.filter((c) => seen[c] !== rec[c]);
+    const differing = ALL_COLUMNS.filter((c) => seen[c] !== rec[c]);
     if (differing.length === 0) {
       identicalDuplicates++;
       continue;
@@ -141,9 +152,9 @@ export function convert(grid: string[][]): { csv: string; report: ConvertReport 
     }
   }
 
-  const lines = [COLUMNS.join(",")];
+  const lines = [ALL_COLUMNS.join(",")];
   for (const rec of byId.values()) {
-    lines.push(COLUMNS.map((c) => csvEscape(rec[c] ?? "")).join(","));
+    lines.push(ALL_COLUMNS.map((c) => csvEscape(rec[c] ?? "")).join(","));
   }
 
   return {

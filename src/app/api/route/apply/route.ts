@@ -66,7 +66,7 @@ export async function POST(request: Request) {
       .from("users")
       .upsert(users.slice(i, i + 500), { onConflict: "emp_id" });
     if (error) {
-      return NextResponse.json({ error: `الموظفون: ${error.message}` }, { status: 500 });
+      return NextResponse.json({ error: `Employees: ${error.message}` }, { status: 500 });
     }
   }
 
@@ -78,6 +78,7 @@ export async function POST(request: Request) {
     region: s.region,
     mars_code: s.mars_code,
     retailer_no: s.retailer_no,
+    customer_number: s.customer_number,
     me_id: s.me_id,
     me_name: s.me_name,
     tl_id: s.tl_id,
@@ -90,7 +91,7 @@ export async function POST(request: Request) {
       .from("stores")
       .upsert(rows.slice(i, i + 500), { onConflict: "id" });
     if (error) {
-      return NextResponse.json({ error: `الأسواق: ${error.message}` }, { status: 500 });
+      return NextResponse.json({ error: `Stores: ${error.message}` }, { status: 500 });
     }
   }
 
@@ -98,7 +99,7 @@ export async function POST(request: Request) {
   if (gone.length > 0) {
     const { error } = await db.from("stores").update({ active: false }).in("id", gone);
     if (error) {
-      return NextResponse.json({ error: `التعطيل: ${error.message}` }, { status: 500 });
+      return NextResponse.json({ error: `Deactivation: ${error.message}` }, { status: 500 });
     }
   }
 

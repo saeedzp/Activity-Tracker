@@ -106,6 +106,36 @@ interface Strings {
     remove: (n: number) => string;
   };
   setup: { title: string; body: string; hint: string };
+  /**
+   * What the routes answer with.
+   *
+   * The screens were translated and these were not, so an employee reading an
+   * English app was refused in Arabic. The server reads the same cookie the
+   * pages do and answers in the language the person chose.
+   */
+  api: {
+    unauthorised: string;
+    emptyEmpId: string;
+    unknownEmpId: string;
+    serverMisconfigured: string;
+    connectFailed: string;
+    missingFields: string;
+    unknownStatus: string;
+    wrongReasonForStatus: string;
+    chooseReason: string;
+    writeReason: string;
+    nameAltStore: string;
+    badPhoto: string;
+    needPhoto: string;
+    maxPhotos: (n: number) => string;
+    activityMissing: string;
+    saveFailed: string;
+    photosNotConfigured: string;
+    photoTooLarge: string;
+    photoWrongType: string;
+    photoUploadFailed: string;
+    notFound: string;
+  };
 }
 
 const ar: Strings = {
@@ -177,6 +207,29 @@ const ar: Strings = {
     extras: "تقدر تضيف صور إضافية للجهة الأخرى — اختياري.",
     alt: (n) => `صورة ${n}`,
     remove: (n) => `حذف الصورة ${n}`,
+  },
+  api: {
+    unauthorised: "غير مصرّح",
+    emptyEmpId: "اكتب رقمك الوظيفي",
+    unknownEmpId: "الرقم غير موجود",
+    serverMisconfigured: "إعداد الخادم غير صحيح — راجع المسؤول",
+    connectFailed: "تعذّر الاتصال، حاول مرة ثانية",
+    missingFields: "بيانات ناقصة",
+    unknownStatus: "حالة غير معروفة",
+    wrongReasonForStatus: "كود السبب غير صحيح لهذه الحالة",
+    chooseReason: "اختر السبب",
+    writeReason: "اكتب السبب",
+    nameAltStore: "اكتب اسم السوق الفعلي",
+    badPhoto: "صورة غير صالحة",
+    needPhoto: "أضف صورة واحدة على الأقل",
+    maxPhotos: (n) => `أقصى عدد صور ${n}`,
+    activityMissing: "الاكتفيتي غير موجود",
+    saveFailed: "تعذّر الحفظ، حاول مرة ثانية",
+    photosNotConfigured: "رفع الصور غير مهيأ",
+    photoTooLarge: "الصورة كبيرة",
+    photoWrongType: "صيغة غير مدعومة",
+    photoUploadFailed: "تعذّر رفع الصورة",
+    notFound: "غير موجود",
   },
   setup: {
     title: "الإعداد غير مكتمل",
@@ -254,6 +307,29 @@ const en: Strings = {
     extras: "You can add more photos from other angles — optional.",
     alt: (n) => `Photo ${n}`,
     remove: (n) => `Remove photo ${n}`,
+  },
+  api: {
+    unauthorised: "Not authorised",
+    emptyEmpId: "Enter your employee number",
+    unknownEmpId: "That number is not registered",
+    serverMisconfigured: "The server is misconfigured — tell your admin",
+    connectFailed: "Could not connect, try again",
+    missingFields: "Something is missing",
+    unknownStatus: "Unknown status",
+    wrongReasonForStatus: "That reason code does not belong to this status",
+    chooseReason: "Choose the reason",
+    writeReason: "Say why",
+    nameAltStore: "Name the actual store",
+    badPhoto: "Invalid photo",
+    needPhoto: "Add at least one photo",
+    maxPhotos: (n) => `At most ${n} photos`,
+    activityMissing: "Activity not found",
+    saveFailed: "Could not save, try again",
+    photosNotConfigured: "Photo upload is not set up",
+    photoTooLarge: "The photo is too large",
+    photoWrongType: "Unsupported format",
+    photoUploadFailed: "Could not upload the photo",
+    notFound: "Not found",
   },
   setup: {
     title: "Setup incomplete",

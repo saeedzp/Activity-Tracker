@@ -57,6 +57,10 @@ export function ActivityManager({
     setBrandDraft("");
   }
 
+  function setCategory(brand: string, category: string) {
+    setCategories({ ...categories, [brand]: category });
+  }
+
   function removeBrand(name: string) {
     setBrands(brands.filter((b) => b !== name));
     const next = { ...categories };
@@ -136,6 +140,28 @@ export function ActivityManager({
 
   const live = rows.filter((r) => r.active);
 
+  /**
+   * What will be wrong in the export if this is saved as it stands.
+   *
+   * Warnings rather than refusals: both produce a file Mars can still open,
+   * just a worse one, and a campaign half-entered on a deadline should not be
+   * blocked. But they are silent failures otherwise — an Arabic name only
+   * shows up as a mangled column and an Arabic photo folder days later.
+   */
+  const arabic = /[\u0600-\u06FF]/;
+  const warnings: string[] = [];
+  if (arabic.test(name)) {
+    warnings.push(
+      "The name has Arabic in it. It goes into Mars' Promotion Description and becomes the photo folder name — both should be English, as Mars sends it.",
+    );
+  }
+  const uncategorised = brands.filter((b) => !categories[b]);
+  if (uncategorised.length > 0) {
+    warnings.push(
+      `No category on ${uncategorised.join(", ")} — the Category column will export empty for ${uncategorised.length === 1 ? "that brand" : "those brands"}.`,
+    );
+  }
+
   return (
     <div className="grid gap-6 md:grid-cols-[340px_1fr]">
       <section className="rounded-xl border border-[var(--line)] bg-white p-4">
@@ -196,8 +222,8 @@ export function ActivityManager({
             </button>
           </div>
           <span className="mt-1 block text-[11px] text-[var(--mute)]">
-            Pick the category before adding the brand — it becomes the Category
-            column in the Mars export.
+            The category becomes the Category column in the Mars export. It can
+            be changed on the brand afterwards.
           </span>
         </label>
 
@@ -206,12 +232,29 @@ export function ActivityManager({
             {brands.map((b) => (
               <span
                 key={b}
-                className="flex items-center gap-1.5 rounded-lg bg-[var(--ink)] px-2.5 py-1 text-xs font-bold text-white"
+                className="flex items-center gap-1.5 rounded-lg bg-[var(--ink)] px-2 py-1 text-xs font-bold text-white"
               >
                 {b}
-                {categories[b] && (
-                  <span className="font-normal opacity-60">{categories[b]}</span>
-                )}
+                {/* Editable in place. A brand added before categories existed —
+                    or filed under the wrong one — has to be fixable without
+                    deleting it, or the Category column silently exports empty. */}
+                <select
+                  value={categories[b] ?? ""}
+                  onChange={(e) => setCategory(b, e.target.value)}
+                  aria-label={`Category for ${b}`}
+                  className={`rounded border-0 bg-white/15 px-1 py-0.5 text-[11px] font-normal text-white ${
+                    categories[b] ? "" : "ring-1 ring-[var(--amber)]"
+                  }`}
+                >
+                  <option value="" className="text-black">
+                    No category
+                  </option>
+                  {CATEGORIES.map((c) => (
+                    <option key={c} value={c} className="text-black">
+                      {c}
+                    </option>
+                  ))}
+                </select>
                 <button
                   type="button"
                   onClick={() => removeBrand(b)}
@@ -298,6 +341,15 @@ export function ActivityManager({
             campaigns apart without a heavy download.
           </p>
         </div>
+
+        {warnings.map((warning) => (
+          <p
+            key={warning}
+            className="mt-2 rounded-lg border border-[var(--amber)] bg-[var(--amber-soft)] px-3 py-2 text-[11px]"
+          >
+            {warning}
+          </p>
+        ))}
 
         {error && (
           <p className="mt-2 rounded-lg bg-[var(--warn-soft)] px-3 py-2 text-xs text-[var(--warn)]">

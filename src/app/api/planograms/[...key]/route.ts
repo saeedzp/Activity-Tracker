@@ -3,6 +3,8 @@ import { currentSession } from "@/lib/session";
 import { isAdmin } from "@/lib/admin";
 import { photoBucket } from "@/lib/r2";
 import { isPlanogramKey, PLANOGRAM_TYPE } from "@/lib/planogram";
+import { currentLang } from "@/lib/lang-server";
+import { t } from "@/lib/i18n";
 
 // Cloudflare Pages runs every route on the edge runtime.
 export const runtime = "edge";
@@ -19,7 +21,10 @@ export async function GET(
   { params }: { params: Promise<{ key: string[] }> },
 ) {
   const [session, admin] = await Promise.all([currentSession(), isAdmin()]);
-  if (!session && !admin) return NextResponse.json({ error: "غير مصرّح" }, { status: 401 });
+  if (!session && !admin) {
+    const m = t(await currentLang()).api;
+    return NextResponse.json({ error: m.unauthorised }, { status: 401 });
+  }
 
   const key = (await params).key.join("/");
   if (!isPlanogramKey(key)) return NextResponse.json({ error: "Invalid key" }, { status: 400 });

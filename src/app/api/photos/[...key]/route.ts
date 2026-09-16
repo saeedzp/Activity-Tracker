@@ -3,6 +3,8 @@ import { currentSession } from "@/lib/session";
 import { isAdmin } from "@/lib/admin";
 import { photoBucket } from "@/lib/r2";
 import { isPhotoKey, PHOTO_TYPE } from "@/lib/photo-key";
+import { currentLang } from "@/lib/lang-server";
+import { t } from "@/lib/i18n";
 
 // Cloudflare Pages runs every route on the edge runtime.
 export const runtime = "edge";
@@ -19,17 +21,18 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ key: string[] }> },
 ) {
+  const m = t(await currentLang()).api;
   const [session, admin] = await Promise.all([currentSession(), isAdmin()]);
-  if (!session && !admin) return NextResponse.json({ error: "غير مصرّح" }, { status: 401 });
+  if (!session && !admin) return NextResponse.json({ error: m.unauthorised }, { status: 401 });
 
   const key = (await params).key.join("/");
-  if (!isPhotoKey(key)) return NextResponse.json({ error: "مفتاح غير صالح" }, { status: 400 });
+  if (!isPhotoKey(key)) return NextResponse.json({ error: m.badPhoto }, { status: 400 });
 
   const bucket = photoBucket();
-  if (!bucket) return NextResponse.json({ error: "رفع الصور غير مهيأ" }, { status: 503 });
+  if (!bucket) return NextResponse.json({ error: m.photosNotConfigured }, { status: 503 });
 
   const object = await bucket.get(key);
-  if (!object) return NextResponse.json({ error: "الصورة غير موجودة" }, { status: 404 });
+  if (!object) return NextResponse.json({ error: m.notFound }, { status: 404 });
 
   return new Response(object.body, {
     headers: {

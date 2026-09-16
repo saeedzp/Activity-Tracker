@@ -12,6 +12,8 @@ import {
   requiresReasonCode,
   type Status,
 } from "@/lib/domain";
+import { currentLang } from "@/lib/lang-server";
+import { t } from "@/lib/i18n";
 
 // Cloudflare Pages runs every route on the edge runtime.
 export const runtime = "edge";
@@ -23,8 +25,9 @@ export const runtime = "edge";
  * latest row per store, activity and size is the current state.
  */
 export async function POST(request: Request) {
+  const m = t(await currentLang()).api;
   const session = await currentSession();
-  if (!session) return NextResponse.json({ error: "غير مصرّح" }, { status: 401 });
+  if (!session) return NextResponse.json({ error: m.unauthorised }, { status: 401 });
 
   const body = await request.json().catch(() => null);
   const storeId = String(body?.store_id ?? "").trim();
@@ -35,26 +38,26 @@ export async function POST(request: Request) {
   const altStoreName = body?.alt_store_name ? String(body.alt_store_name).trim() : null;
 
   if (!storeId || !activityId || !displayType) {
-    return NextResponse.json({ error: "بيانات ناقصة" }, { status: 400 });
+    return NextResponse.json({ error: m.missingFields }, { status: 400 });
   }
   if (!(STATUSES as readonly string[]).includes(status)) {
-    return NextResponse.json({ error: "حالة غير معروفة" }, { status: 400 });
+    return NextResponse.json({ error: m.unknownStatus }, { status: 400 });
   }
   if (reasonCode && !reasonCodesFor(status).includes(reasonCode)) {
-    return NextResponse.json({ error: "كود السبب غير صحيح لهذه الحالة" }, { status: 400 });
+    return NextResponse.json({ error: m.wrongReasonForStatus }, { status: 400 });
   }
   // Not Implemented is the one status that always owes an explanation.
   if (status === "Not Implemented" && !reasonCode) {
-    return NextResponse.json({ error: "اختر السبب" }, { status: 400 });
+    return NextResponse.json({ error: m.chooseReason }, { status: 400 });
   }
   if (requiresAltStoreName(status) && !altStoreName) {
-    return NextResponse.json({ error: "اكتب اسم السوق الفعلي" }, { status: 400 });
+    return NextResponse.json({ error: m.nameAltStore }, { status: 400 });
   }
   // "Other" names no cause on its own, so the explanation is what makes the row
   // worth anything to whoever reads the export.
   const note = body?.note ? String(body.note).trim() : null;
   if (reasonCode === "Other" && !note) {
-    return NextResponse.json({ error: "اكتب السبب" }, { status: 400 });
+    return NextResponse.json({ error: m.writeReason }, { status: 400 });
   }
 
   // Photos are uploaded first and claimed here by key. Checked rather than
@@ -62,16 +65,16 @@ export async function POST(request: Request) {
   // history.
   const keys = Array.isArray(body?.photos) ? body.photos : [];
   if (keys.length > MAX_PHOTOS) {
-    return NextResponse.json({ error: `أقصى عدد صور ${MAX_PHOTOS}` }, { status: 400 });
+    return NextResponse.json({ error: m.maxPhotos(MAX_PHOTOS) }, { status: 400 });
   }
   if (!keys.every(isPhotoKey)) {
-    return NextResponse.json({ error: "صورة غير صالحة" }, { status: 400 });
+    return NextResponse.json({ error: m.badPhoto }, { status: 400 });
   }
   // The one status that claims something happened is the one that owes proof,
   // and the rule belongs here rather than only in the form: the form is a
   // convenience, this route is the record.
   if (status === "Implemented" && keys.length === 0) {
-    return NextResponse.json({ error: "أضف صورة واحدة على الأقل" }, { status: 400 });
+    return NextResponse.json({ error: m.needPhoto }, { status: 400 });
   }
 
   const db = serviceClient();
@@ -86,7 +89,7 @@ export async function POST(request: Request) {
     .maybeSingle();
 
   if (!activity) {
-    return NextResponse.json({ error: "الاكتفيتي غير موجود" }, { status: 400 });
+    return NextResponse.json({ error: m.activityMissing }, { status: 400 });
   }
   const plan = activity as unknown as {
     id: string;
@@ -136,7 +139,7 @@ export async function POST(request: Request) {
 
   if (error) {
     console.error("submission insert failed:", error.message);
-    return NextResponse.json({ error: "تعذّر الحفظ، حاول مرة ثانية" }, { status: 500 });
+    return NextResponse.json({ error: m.saveFailed }, { status: 500 });
   }
 
   if (keys.length > 0) {

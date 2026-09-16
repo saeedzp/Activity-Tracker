@@ -4,6 +4,8 @@ import { serviceClient } from "@/lib/supabase";
 import { photoBucket } from "@/lib/r2";
 import { MAX_PHOTO_BYTES, PHOTO_TYPE, photoKey } from "@/lib/photo-key";
 import { monthOf } from "@/lib/dates";
+import { currentLang } from "@/lib/lang-server";
+import { t } from "@/lib/i18n";
 
 // Cloudflare Pages runs every route on the edge runtime.
 export const runtime = "edge";
@@ -18,13 +20,14 @@ export const runtime = "edge";
  * that failed to upload, is a report with no evidence behind it.
  */
 export async function POST(request: Request) {
+  const m = t(await currentLang()).api;
   const session = await currentSession();
-  if (!session) return NextResponse.json({ error: "غير مصرّح" }, { status: 401 });
+  if (!session) return NextResponse.json({ error: m.unauthorised }, { status: 401 });
 
   const bucket = photoBucket();
   if (!bucket) {
     console.error("photo upload attempted with no PHOTOS binding");
-    return NextResponse.json({ error: "رفع الصور غير مهيأ" }, { status: 503 });
+    return NextResponse.json({ error: m.photosNotConfigured }, { status: 503 });
   }
 
   const form = await request.formData().catch(() => null);
@@ -33,15 +36,15 @@ export async function POST(request: Request) {
   const activityId = String(form?.get("activity_id") ?? "").trim();
 
   if (!(file instanceof File) || !storeId || !activityId) {
-    return NextResponse.json({ error: "بيانات ناقصة" }, { status: 400 });
+    return NextResponse.json({ error: m.missingFields }, { status: 400 });
   }
   // The browser compresses before sending; this is the ceiling that makes the
   // monthly cost a number we can work out in advance.
   if (file.size > MAX_PHOTO_BYTES) {
-    return NextResponse.json({ error: "الصورة كبيرة" }, { status: 413 });
+    return NextResponse.json({ error: m.photoTooLarge }, { status: 413 });
   }
   if (file.type && file.type !== PHOTO_TYPE) {
-    return NextResponse.json({ error: "صيغة غير مدعومة" }, { status: 400 });
+    return NextResponse.json({ error: m.photoWrongType }, { status: 400 });
   }
 
   // The month comes from the campaign, never from the phone: a September stand
@@ -61,7 +64,7 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("photo upload failed:", error);
-    return NextResponse.json({ error: "تعذّر رفع الصورة" }, { status: 502 });
+    return NextResponse.json({ error: m.photoUploadFailed }, { status: 502 });
   }
 
   return NextResponse.json({ key, bytes: file.size });

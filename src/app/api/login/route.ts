@@ -1,16 +1,22 @@
 import { NextResponse } from "next/server";
 import { serviceClient } from "@/lib/supabase";
 import { SESSION_COOKIE, SESSION_MAX_AGE, encodeSession } from "@/lib/session";
+import { currentLang } from "@/lib/lang-server";
+import { t } from "@/lib/i18n";
 
 // Cloudflare Pages runs every route on the edge runtime.
 export const runtime = "edge";
 
 /** Sign in with an employee number. No password: the number is the credential. */
 export async function POST(request: Request) {
+  // Answered in the language the employee chose, the same cookie the pages
+  // read — an English app that refuses you in Arabic is a broken app.
+  const m = t(await currentLang()).api;
+
   const body = await request.json().catch(() => null);
   const empId = String(body?.emp_id ?? "").trim();
   if (!empId) {
-    return NextResponse.json({ error: "اكتب رقمك الوظيفي" }, { status: 400 });
+    return NextResponse.json({ error: m.emptyEmpId }, { status: 400 });
   }
 
   const db = serviceClient();
@@ -27,9 +33,7 @@ export async function POST(request: Request) {
     console.error("login query failed:", error.message);
     return NextResponse.json(
       {
-        error: rejectedKey
-          ? "إعداد الخادم غير صحيح — راجع المسؤول"
-          : "تعذّر الاتصال، حاول مرة ثانية",
+        error: rejectedKey ? m.serverMisconfigured : m.connectFailed,
       },
       { status: rejectedKey ? 503 : 500 },
     );
@@ -37,7 +41,7 @@ export async function POST(request: Request) {
   // A disabled employee is refused with the same wording as an unknown number,
   // so the screen never confirms which numbers exist.
   if (!data || !data.active) {
-    return NextResponse.json({ error: "الرقم غير موجود" }, { status: 404 });
+    return NextResponse.json({ error: m.unknownEmpId }, { status: 404 });
   }
 
   const response = NextResponse.json({

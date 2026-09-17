@@ -45,13 +45,13 @@ const HISTORY_SELECT =
 export default async function AdminPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; month?: string }>;
+  searchParams: Promise<{ tab?: string; month?: string; region?: string }>;
 }) {
   const missing = missingEnv();
   // The admin screens are English regardless of the employee's choice.
   if (missing.length > 0) return <SetupNeeded missing={missing} lang="en" />;
 
-  const { tab: requestedTab, month: requestedMonth } = await searchParams;
+  const { tab: requestedTab, month: requestedMonth, region: requestedRegion } = await searchParams;
   const tab = tabOf(requestedTab);
   await requireAdmin(`/admin?tab=${tab}`);
 
@@ -67,7 +67,13 @@ export default async function AdminPage({
       {tab === "planograms" && (
         <PlanogramsPanel db={db} month={requestedMonth?.trim() || monthOf(new Date())} />
       )}
-      {tab === "history" && <HistoryPanel db={db} month={requestedMonth?.trim() ?? ""} />}
+      {tab === "history" && (
+        <HistoryPanel
+          db={db}
+          month={requestedMonth?.trim() ?? ""}
+          region={requestedRegion?.trim() ?? ""}
+        />
+      )}
       {tab === "photos" && (
         <PhotosPanel db={db} month={requestedMonth?.trim() || monthOf(new Date())} />
       )}
@@ -109,7 +115,15 @@ async function RoutePanel({ db }: { db: Db }) {
   );
 }
 
-async function HistoryPanel({ db, month }: { db: Db; month: string }) {
+async function HistoryPanel({
+  db,
+  month,
+  region,
+}: {
+  db: Db;
+  month: string;
+  region: string;
+}) {
   let query = db
     .from("submissions")
     .select(HISTORY_SELECT)
@@ -143,6 +157,7 @@ async function HistoryPanel({ db, month }: { db: Db; month: string }) {
         photos={(photos.data ?? []) as unknown as PhotoRow[]}
         months={months}
         month={month}
+        region={region}
       />
     </>
   );

@@ -72,14 +72,19 @@ export function HistoryTable({
   photos,
   months,
   month,
+  region: initialRegion = "",
 }: {
   rows: HistoryRow[];
   stores: StoreName[];
   photos: PhotoRow[];
   months: string[];
   month: string;
+  region?: string;
 }) {
   const [query, setQuery] = useState("");
+  // Seeded from the URL and submitted with the form, so choosing a region and
+  // then changing the month does not quietly drop the region.
+  const [region, setRegion] = useState(initialRegion);
   const byId = useMemo(() => new Map(stores.map((s) => [s.id, s])), [stores]);
   const photosOf = useMemo(() => {
     const map = new Map<string, string[]>();
@@ -91,11 +96,37 @@ export function HistoryTable({
     return map;
   }, [photos]);
 
+  /**
+   * The regions actually present in what is on screen.
+   *
+   * Listing every region a store could be in would offer months that hold
+   * nothing — the point of the filter is to narrow what is here.
+   */
+  const regions = useMemo(() => {
+    const found = new Set<string>();
+    for (const row of rows) {
+      const name = byId.get(row.store_id)?.region;
+      if (name) found.add(name);
+    }
+    if (region) found.add(region);
+    return [...found].sort((a, b) => a.localeCompare(b, "en"));
+  }, [rows, byId, region]);
+
+  /**
+   * Region narrows in the browser while the month reloads the page.
+   *
+   * The month decides which rows are fetched at all; the region only narrows
+   * rows already here, and it lives on the store rather than the submission,
+   * so filtering it in the query would mean a join for no gain. Both exports
+   * read this same list, so a filtered view exports a filtered file.
+   */
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return rows;
+    if (!q && !region) return rows;
     return rows.filter((r) => {
       const store = byId.get(r.store_id);
+      if (region && store?.region !== region) return false;
+      if (!q) return true;
       return (
         (store?.name ?? "").toLowerCase().includes(q) ||
         r.store_id.toLowerCase().includes(q) ||
@@ -104,7 +135,7 @@ export function HistoryTable({
         (store?.city ?? "").toLowerCase().includes(q)
       );
     });
-  }, [rows, query, byId]);
+  }, [rows, query, region, byId]);
 
   /**
    * One row per column, in the same order the table shows.
@@ -201,6 +232,22 @@ export function HistoryTable({
         >
           Show
         </button>
+        <label className="text-sm">
+          <span className="mb-1 block text-xs text-[var(--mute)]">Region</span>
+          <select
+            name="region"
+            value={region}
+            onChange={(e) => setRegion(e.target.value)}
+            className="rounded-lg border border-[var(--line)] bg-white p-2 text-sm"
+          >
+            <option value="">All regions</option>
+            {regions.map((r) => (
+              <option key={r} value={r}>
+                {r}
+              </option>
+            ))}
+          </select>
+        </label>
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -229,7 +276,8 @@ export function HistoryTable({
 
       {filtered.length === 0 ? (
         <p className="rounded-xl border border-[var(--line)] bg-white p-8 text-center text-sm text-[var(--mute)]">
-          No submissions{month ? ` in ${formatMonthEn(month)}` : ""} yet.
+          No submissions{month ? ` in ${formatMonthEn(month)}` : ""}
+          {region ? ` for ${region}` : ""} yet.
         </p>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-[var(--line)] bg-white">

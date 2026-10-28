@@ -202,19 +202,34 @@ export const REASON_AR: Record<string, string> = {
   Other: "سبب آخر",
 };
 
-/** Brand tiles on the entry screen, with the colour each is drawn in. */
+/**
+ * The brands an employee picks from when the month has no campaign yet: a
+ * stand arrived before anyone added it, and the photo should not wait for the
+ * admin. Each carries its Mars category, so the export still fills Category.
+ */
 export const BRANDS = [
-  { name: "Galaxy", color: "#6D2C7E" },
-  { name: "Twix", color: "#C8992B" },
-  { name: "Snickers", color: "#6B3F17" },
-  { name: "Bounty", color: "#0F5FA6" },
-  { name: "Mars", color: "#B4121B" },
-  { name: "Maltesers", color: "#8B3E13" },
-  { name: "Extra", color: "#1B7F5A" },
-  { name: "Skittles", color: "#D2196E" },
-] as const;
+  { name: "Galaxy", color: "#6D2C7E", category: "Chocolate" },
+  { name: "Twix", color: "#C8992B", category: "Chocolate" },
+  { name: "Snickers", color: "#6B3F17", category: "Chocolate" },
+  { name: "Bounty", color: "#0F5FA6", category: "Chocolate" },
+  { name: "Mars", color: "#B4121B", category: "Chocolate" },
+  { name: "Maltesers", color: "#8B3E13", category: "Chocolate" },
+  { name: "Extra", color: "#1B7F5A", category: "Gum" },
+  { name: "Skittles", color: "#D2196E", category: "Confections" },
+] as const satisfies readonly { name: string; color: string; category: Category }[];
 
 export type Brand = (typeof BRANDS)[number]["name"];
+
+export function isBrand(name: string): name is Brand {
+  return BRANDS.some((b) => b.name === name);
+}
+
+/** The category of each picked brand, shaped like `activities.brand_categories`. */
+export function brandCategories(names: readonly string[]): Record<string, Category> {
+  const out: Record<string, Category> = {};
+  for (const b of BRANDS) if (names.includes(b.name)) out[b.name] = b.category;
+  return out;
+}
 
 export const MATCH_METHOD_AR: Record<MatchMethod, string> = {
   exact: "مطابقة دقيقة",

@@ -95,6 +95,11 @@ describe("planExport", () => {
     expect(bundles.find((b) => b.region === "West")!.files).toHaveLength(2);
   });
 
+  it("files a stand reported without a campaign under its brands", () => {
+    const [bundle] = planExport([photo({ activityName: null, brands: ["Twix", "Snickers"] })]);
+    expect(bundle.files[0].path).toBe("West/Jeddah/Twix + Snickers/Panda Al Rawabi - 2x2-1.jpg");
+  });
+
   it("names a row with nothing on it rather than dropping it", () => {
     // A submission from before campaigns existed still has photos worth pulling.
     const [bundle] = planExport([

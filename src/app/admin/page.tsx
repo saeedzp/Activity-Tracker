@@ -221,7 +221,7 @@ async function PlanogramsPanel({ db, month }: { db: Db; month: string }) {
  */
 async function PhotosPanel({ db, month }: { db: Db; month: string }) {
   const [subs, stores] = await Promise.all([
-    db.from("submissions").select("id, store_id, activity_name, display_type").eq("month", month),
+    db.from("submissions").select("id, store_id, activity_name, brands, display_type").eq("month", month),
     db.from("stores").select("id, name, region, city"),
   ]);
 
@@ -229,6 +229,7 @@ async function PhotosPanel({ db, month }: { db: Db; month: string }) {
     id: string;
     store_id: string;
     activity_name: string | null;
+    brands: string[] | null;
     display_type: string | null;
   }[];
 
@@ -261,6 +262,7 @@ async function PhotosPanel({ db, month }: { db: Db; month: string }) {
     return {
       key: photo.r2_key,
       activityName: submission?.activity_name ?? null,
+      brands: submission?.brands ?? null,
       region: store?.region ?? null,
       city: store?.city ?? null,
       storeName: store?.name ?? null,

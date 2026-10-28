@@ -35,7 +35,8 @@ export async function POST(request: Request) {
   const storeId = String(form?.get("store_id") ?? "").trim();
   const activityId = String(form?.get("activity_id") ?? "").trim();
 
-  if (!(file instanceof File) || !storeId || !activityId) {
+  // The campaign is optional: a month with none yet still takes photos.
+  if (!(file instanceof File) || !storeId) {
     return NextResponse.json({ error: m.missingFields }, { status: 400 });
   }
   // The browser compresses before sending; this is the ceiling that makes the
@@ -50,11 +51,9 @@ export async function POST(request: Request) {
   // The month comes from the campaign, never from the phone: a September stand
   // photographed in October is filed under September like everything else.
   const db = serviceClient();
-  const { data: activity } = await db
-    .from("activities")
-    .select("month")
-    .eq("id", activityId)
-    .maybeSingle();
+  const { data: activity } = activityId
+    ? await db.from("activities").select("month").eq("id", activityId).maybeSingle()
+    : { data: null };
   const month = (activity as { month: string | null } | null)?.month ?? monthOf(new Date());
 
   const key = photoKey(month, storeId, crypto.randomUUID());

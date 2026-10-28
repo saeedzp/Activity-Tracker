@@ -57,6 +57,7 @@ interface Strings {
   entry: {
     activity: string;
     noActivities: string;
+    brandPick: string;
     planogram: string;
     planogramHint: string;
     size: string;
@@ -125,6 +126,8 @@ interface Strings {
     needPhoto: string;
     maxPhotos: (n: number) => string;
     activityMissing: string;
+    chooseActivity: string;
+    chooseBrand: string;
     saveFailed: string;
     photosNotConfigured: string;
     photoTooLarge: string;
@@ -155,7 +158,8 @@ const ar: Strings = {
   },
   entry: {
     activity: "الاكتفيتي",
-    noActivities: "ما فيه اكتفيتي مضاف لهذا الشهر بعد.",
+    noActivities: "ما فيه اكتفيتي مضاف لهذا الشهر بعد — اختر البراند اللي على الاستاند.",
+    brandPick: "البراند",
     planogram: "شوف البلانوغرام",
     planogramHint: "أشكال الاستاندات والأصناف اللي عليها",
     size: "المقاس",
@@ -216,6 +220,8 @@ const ar: Strings = {
     needPhoto: "أضف صورة واحدة على الأقل",
     maxPhotos: (n) => `أقصى عدد صور ${n}`,
     activityMissing: "الاكتفيتي غير موجود",
+    chooseActivity: "اختر الاكتفيتي",
+    chooseBrand: "اختر البراند",
     saveFailed: "تعذّر الحفظ، حاول مرة ثانية",
     photosNotConfigured: "رفع الصور غير مهيأ",
     photoTooLarge: "الصورة كبيرة",
@@ -251,7 +257,8 @@ const en: Strings = {
   },
   entry: {
     activity: "Activity",
-    noActivities: "No activity has been added for this month yet.",
+    noActivities: "No activity has been added for this month yet — choose the brand on the stand.",
+    brandPick: "Brand",
     planogram: "View the planogram",
     planogramHint: "The stands and the SKUs on them",
     size: "Size",
@@ -312,6 +319,8 @@ const en: Strings = {
     needPhoto: "Add at least one photo",
     maxPhotos: (n) => `At most ${n} photos`,
     activityMissing: "Activity not found",
+    chooseActivity: "Choose the activity",
+    chooseBrand: "Choose the brand",
     saveFailed: "Could not save, try again",
     photosNotConfigured: "Photo upload is not set up",
     photoTooLarge: "The photo is too large",

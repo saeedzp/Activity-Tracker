@@ -5,6 +5,8 @@ import { monthOf } from "@/lib/dates";
 import { isPhotoKey, MAX_PHOTOS } from "@/lib/photo-key";
 import {
   asksCustomPosm,
+  brandCategories,
+  isBrand,
   isClosing,
   isEntryStatus,
   isPlanogramReason,
@@ -34,7 +36,7 @@ export async function POST(request: Request) {
   const status = String(body?.status ?? "").trim() as Status;
   const reasonCode = body?.reason_code ? String(body.reason_code).trim() : null;
 
-  if (!storeId || !activityId || !displayType) {
+  if (!storeId || !displayType) {
     return NextResponse.json({ error: m.missingFields }, { status: 400 });
   }
   // Only the two answers the question offers. The older statuses stay valid in
@@ -72,20 +74,8 @@ export async function POST(request: Request) {
 
   const db = serviceClient();
 
-  // The campaign is read rather than trusted from the client: its name, brands
-  // and month are copied onto the submission, so editing the campaign later
-  // never rewrites what was reported at the time.
-  const { data: activity } = await db
-    .from("activities")
-    .select("id, month, name, brands, brand_categories, effective_from, effective_to")
-    .eq("id", activityId)
-    .maybeSingle();
-
-  if (!activity) {
-    return NextResponse.json({ error: m.activityMissing }, { status: 400 });
-  }
-  const plan = activity as unknown as {
-    id: string;
+  type Plan = {
+    id: string | null;
     month: string | null;
     name: string | null;
     brands: string[] | null;
@@ -93,6 +83,48 @@ export async function POST(request: Request) {
     effective_from: string | null;
     effective_to: string | null;
   };
+  let plan: Plan;
+
+  if (activityId) {
+    // The campaign is read rather than trusted from the client: its name,
+    // brands and month are copied onto the submission, so editing the campaign
+    // later never rewrites what was reported at the time.
+    const { data: activity } = await db
+      .from("activities")
+      .select("id, month, name, brands, brand_categories, effective_from, effective_to")
+      .eq("id", activityId)
+      .maybeSingle();
+    if (!activity) {
+      return NextResponse.json({ error: m.activityMissing }, { status: 400 });
+    }
+    plan = activity as unknown as Plan;
+  } else {
+    // No campaign: the employee names the brands. Only allowed while the month
+    // has none — once the admin adds one, the entry belongs to it.
+    const month = monthOf(new Date());
+    const { count } = await db
+      .from("activities")
+      .select("id", { count: "exact", head: true })
+      .eq("month", month);
+    if ((count ?? 0) > 0) {
+      return NextResponse.json({ error: m.chooseActivity }, { status: 400 });
+    }
+    const picked: string[] = Array.isArray(body?.brands)
+      ? [...new Set(body.brands.map((b: unknown) => String(b).trim()))] as string[]
+      : [];
+    if (picked.length === 0 || !picked.every(isBrand)) {
+      return NextResponse.json({ error: m.chooseBrand }, { status: 400 });
+    }
+    plan = {
+      id: null,
+      month,
+      name: null,
+      brands: picked,
+      brand_categories: brandCategories(picked),
+      effective_from: null,
+      effective_to: null,
+    };
+  }
 
   const { data, error } = await db
     .from("submissions")

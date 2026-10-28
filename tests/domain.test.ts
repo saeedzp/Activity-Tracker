@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   CLOSING_STATUSES,
   DISPLAY_TYPES,
+  brandCategories,
+  BRANDS,
+  CATEGORIES,
   ENTRY_STATUSES,
+  isBrand,
   isClosing,
   isEntryStatus,
   isPlanogramReason,
@@ -60,6 +64,18 @@ describe("the planogram question", () => {
     expect(isPlanogramReason("OOS")).toBe(false);
     expect(reasonAr("No Planogram")).toBe("ما فيه بلانوغرام بعد");
     expect(reasonAr("Low Stock")).toBe("ستوك ناقص");
+  });
+});
+
+describe("brands picked without a campaign", () => {
+  it("gives every brand a Mars category", () => {
+    for (const b of BRANDS) expect(CATEGORIES).toContain(b.category);
+  });
+
+  it("maps the picked brands to their categories and ignores unknown ones", () => {
+    expect(brandCategories(["Twix", "Extra", "Nope"])).toEqual({ Twix: "Chocolate", Extra: "Gum" });
+    expect(isBrand("Skittles")).toBe(true);
+    expect(isBrand("skittles")).toBe(false);
   });
 });
 

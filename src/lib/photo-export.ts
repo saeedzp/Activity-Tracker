@@ -27,6 +27,8 @@ export interface ExportPhoto {
   key: string;
   /** The campaign name, as entered — English, like everything exported. */
   activityName: string | null;
+  /** The brands reported, which name the folder when there was no campaign. */
+  brands?: string[] | null;
   region: string | null;
   city: string | null;
   storeName: string | null;
@@ -52,6 +54,15 @@ export interface RegionBundle {
 export function folderRegion(region: string | null | undefined): string | null {
   if (region == null) return null;
   return /^\s*west\b/i.test(region) ? "West" : region;
+}
+
+/**
+ * The campaign's folder: its name, or — for a stand reported before any
+ * campaign was added — the brands on it, so those photos are still findable.
+ */
+function campaignFolder(photo: ExportPhoto): string | null {
+  if (photo.activityName) return photo.activityName;
+  return photo.brands?.length ? photo.brands.join(" + ") : null;
 }
 
 /** English too, so a missing value does not put Arabic into an English tree. */
@@ -87,7 +98,7 @@ export function planExport(photos: ExportPhoto[]): RegionBundle[] {
     (a, b) =>
       (folderRegion(a.region) ?? "").localeCompare(folderRegion(b.region) ?? "", "en") ||
       (a.city ?? "").localeCompare(b.city ?? "", "en") ||
-      (a.activityName ?? "").localeCompare(b.activityName ?? "", "en") ||
+      (campaignFolder(a) ?? "").localeCompare(campaignFolder(b) ?? "", "en") ||
       (a.storeName ?? "").localeCompare(b.storeName ?? "", "en") ||
       (a.displayType ?? "").localeCompare(b.displayType ?? "", "en") ||
       (a.position ?? 9) - (b.position ?? 9) ||
@@ -102,7 +113,7 @@ export function planExport(photos: ExportPhoto[]): RegionBundle[] {
   for (const photo of sorted) {
     const region = segment(folderRegion(photo.region), UNKNOWN);
     const city = segment(photo.city, UNKNOWN);
-    const activity = segment(photo.activityName, NO_CAMPAIGN);
+    const activity = segment(campaignFolder(photo), NO_CAMPAIGN);
     const store = segment(photo.storeName, UNKNOWN);
     const size = photo.displayType ? ` - ${segment(photo.displayType, UNKNOWN)}` : "";
 

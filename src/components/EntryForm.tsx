@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   asksCustomPosm,
+  BRANDS,
   DISPLAY_TYPES,
   displayTypeText,
   PLANOGRAM_REASONS,
@@ -62,6 +63,8 @@ export function EntryForm({
   const s = t(lang).entry;
   const [step, setStep] = useState<Step>("form");
   const [activityId, setActivityId] = useState("");
+  /** Picked by the employee only when the month has no campaign yet. */
+  const [pickedBrands, setPickedBrands] = useState<string[]>([]);
   const [displayType, setDisplayType] = useState("");
   const [answer, setAnswer] = useState<AnswerKey | "">("");
   const [reasonCode, setReasonCode] = useState("");
@@ -73,6 +76,8 @@ export function EntryForm({
   const [error, setError] = useState("");
 
   const activity = activities.find((a) => a.id === activityId);
+  const noCampaign = activities.length === 0;
+  const brands = noCampaign ? pickedBrands : activity?.brands ?? [];
   /** The campaign's drawings — usually one, sometimes more than one file. */
   const activityPlanograms = activityId
     ? planograms.filter((p) => p.activity_id === activityId)
@@ -84,7 +89,7 @@ export function EntryForm({
   const needsPosmAnswer = wentIn && asksCustomPosm(displayType);
 
   const ready =
-    activityId !== "" &&
+    (noCampaign ? pickedBrands.length > 0 : activityId !== "") &&
     displayType !== "" &&
     answer !== "" &&
     // Side one is owed on either answer: a yes shows it applied, a no shows
@@ -120,7 +125,7 @@ export function EntryForm({
       const form = new FormData();
       form.append("photo", photo.blob, "photo.jpg");
       form.append("store_id", storeId);
-      form.append("activity_id", activityId);
+      if (activityId) form.append("activity_id", activityId);
       let res: Response;
       try {
         res = await fetch("/api/photos", { method: "POST", body: form });
@@ -155,7 +160,8 @@ export function EntryForm({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           store_id: storeId,
-          activity_id: activityId,
+          activity_id: activityId || null,
+          brands: noCampaign ? pickedBrands : undefined,
           display_type: displayType,
           entered: wentIn,
           entry_date: wentIn ? entryDate || null : null,
@@ -184,6 +190,7 @@ export function EntryForm({
 
   function reset() {
     setActivityId("");
+    setPickedBrands([]);
     setDisplayType("");
     setAnswer("");
     setReasonCode("");
@@ -202,7 +209,7 @@ export function EntryForm({
         </div>
         <h1 className="text-xl font-bold">{s.doneTitle}</h1>
         <p className="mt-2 text-sm text-[var(--mute)]">
-          {storeName} · {activity?.name} · {displayTypeText(lang, displayType)}
+          {storeName} · {activity?.name ?? brands.join(" · ")} · {displayTypeText(lang, displayType)}
         </p>
         <button
           type="button"
@@ -233,8 +240,8 @@ export function EntryForm({
 
         <dl className="overflow-hidden rounded-xl border border-[var(--line)] bg-white">
           <Row label={s.store} value={storeName} />
-          <Row label={s.activity} value={activity?.name ?? "—"} />
-          <Row label={s.brands} value={activity?.brands.join(" · ") ?? "—"} />
+          {!noCampaign && <Row label={s.activity} value={activity?.name ?? "—"} />}
+          <Row label={s.brands} value={brands.join(" · ") || "—"} />
           <Row label={s.size} value={displayTypeText(lang, displayType)} />
           <Row
             label={s.entered}
@@ -301,11 +308,38 @@ export function EntryForm({
       </a>
       <h1 className="text-lg font-bold">{storeName}</h1>
 
-      <Label>{s.activity}</Label>
-      {activities.length === 0 ? (
-        <p className="rounded-xl border border-[var(--line)] bg-white p-4 text-sm text-[var(--mute)]">
-          {s.noActivities}
-        </p>
+      <Label>{noCampaign ? s.brandPick : s.activity}</Label>
+      {noCampaign ? (
+        // No campaign yet this month: the stand still gets reported, against
+        // the brands on it. One or more, since a stand can carry several.
+        <>
+          <p className="mb-2 text-xs text-[var(--mute)]">{s.noActivities}</p>
+          <div className="flex flex-wrap gap-2">
+            {BRANDS.map((b) => {
+              const on = pickedBrands.includes(b.name);
+              return (
+                <button
+                  key={b.name}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() =>
+                    setPickedBrands(
+                      on ? pickedBrands.filter((n) => n !== b.name) : [...pickedBrands, b.name],
+                    )
+                  }
+                  className="rounded-lg border-2 px-3.5 py-2 text-sm font-bold"
+                  style={
+                    on
+                      ? { background: b.color, borderColor: b.color, color: "#fff" }
+                      : { borderColor: b.color, color: b.color, background: "#fff" }
+                  }
+                >
+                  {b.name}
+                </button>
+              );
+            })}
+          </div>
+        </>
       ) : (
         <div className="flex flex-col gap-2">
           {activities.map((a) => (

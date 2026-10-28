@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { planExport, segment, zipName, type ExportPhoto } from "../src/lib/photo-export";
+import { folderRegion, planExport, segment, zipName, type ExportPhoto } from "../src/lib/photo-export";
 
 const photo = (over: Partial<ExportPhoto> = {}): ExportPhoto => ({
   key: "2026-09/AM260/a.jpg",
@@ -7,6 +7,8 @@ const photo = (over: Partial<ExportPhoto> = {}): ExportPhoto => ({
   region: "West",
   city: "Jeddah",
   storeName: "Panda Al Rawabi",
+  displayType: "2x2",
+  position: 1,
   ...over,
 });
 
@@ -34,23 +36,53 @@ describe("segment", () => {
 });
 
 describe("planExport", () => {
-  it("files a photo under campaign, region and city, named for the store", () => {
+  it("files a photo under region, city and campaign, named for store, size and side", () => {
     const [bundle] = planExport([photo()]);
     expect(bundle.region).toBe("West");
-    expect(bundle.files[0].path).toBe("Back to School/West/Jeddah/Panda Al Rawabi.jpg");
+    expect(bundle.files[0].path).toBe("West/Jeddah/Back to School/Panda Al Rawabi - 2x2-1.jpg");
   });
 
-  it("numbers a second photo of the same store instead of losing it", () => {
+  it("names the two sides -1 and -2", () => {
+    const files = planExport([photo({ key: "k2", position: 2 }), photo({ key: "k1", position: 1 })])[0].files;
+    expect(files.map((f) => f.path)).toEqual([
+      "West/Jeddah/Back to School/Panda Al Rawabi - 2x2-1.jpg",
+      "West/Jeddah/Back to School/Panda Al Rawabi - 2x2-2.jpg",
+    ]);
+  });
+
+  it("keeps a repeat report of the same store instead of losing it", () => {
+    const files = planExport([photo({ key: "k1" }), photo({ key: "k2" })])[0].files;
+    expect(files.map((f) => f.path)).toEqual([
+      "West/Jeddah/Back to School/Panda Al Rawabi - 2x2-1.jpg",
+      "West/Jeddah/Back to School/Panda Al Rawabi - 2x2-1 (2).jpg",
+    ]);
+  });
+
+  it("numbers photos from before the two sides in order", () => {
     const files = planExport([
-      photo({ key: "k1" }),
-      photo({ key: "k2" }),
-      photo({ key: "k3" }),
+      photo({ key: "k1", position: null }),
+      photo({ key: "k2", position: null }),
     ])[0].files;
     expect(files.map((f) => f.path)).toEqual([
-      "Back to School/West/Jeddah/Panda Al Rawabi.jpg",
-      "Back to School/West/Jeddah/Panda Al Rawabi-2.jpg",
-      "Back to School/West/Jeddah/Panda Al Rawabi-3.jpg",
+      "West/Jeddah/Back to School/Panda Al Rawabi - 2x2-1.jpg",
+      "West/Jeddah/Back to School/Panda Al Rawabi - 2x2-2.jpg",
     ]);
+  });
+
+  it("folds Mars's three western units into one West folder", () => {
+    const bundles = planExport([
+      photo({ key: "k1", region: "West - Jed Unit", city: "Jeddah" }),
+      photo({ key: "k2", region: "West - Mak Unit", city: "Makkah" }),
+      photo({ key: "k3", region: "West - Mad Unit", city: "Madinah" }),
+    ]);
+    expect(bundles.map((b) => b.region)).toEqual(["West"]);
+    expect(bundles[0].files.map((f) => f.path.split("/").slice(0, 2).join("/"))).toEqual([
+      "West/Jeddah",
+      "West/Madinah",
+      "West/Makkah",
+    ]);
+    expect(folderRegion("South")).toBe("South");
+    expect(folderRegion("Western")).toBe("Western");
   });
 
   it("gives every region its own bundle", () => {
@@ -66,10 +98,10 @@ describe("planExport", () => {
   it("names a row with nothing on it rather than dropping it", () => {
     // A submission from before campaigns existed still has photos worth pulling.
     const [bundle] = planExport([
-      photo({ activityName: null, region: null, city: null, storeName: null }),
+      photo({ activityName: null, region: null, city: null, storeName: null, displayType: null }),
     ]);
     expect(bundle.region).toBe("Unknown");
-    expect(bundle.files[0].path).toBe("No Activity/Unknown/Unknown/Unknown.jpg");
+    expect(bundle.files[0].path).toBe("Unknown/Unknown/No Activity/Unknown-1.jpg");
   });
 
   it("produces the same names every time it runs", () => {

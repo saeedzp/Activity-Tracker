@@ -63,17 +63,12 @@ interface Strings {
     question: string;
     answerYes: string;
     answerNo: string;
-    answerOther: string;
     posmQuestion: string;
     photoLabel: string;
     entryDate: string;
     date: string;
     reasonQuestion: string;
-    reasonDetail: string;
-    reasonPlaceholder: string;
     staysOpen: string;
-    altStore: string;
-    altStorePlaceholder: string;
     review: string;
     confirmTitle: string;
     confirmHint: string;
@@ -81,7 +76,6 @@ interface Strings {
     brands: string;
     entered: string;
     reason: string;
-    actualStore: string;
     customPosm: string;
     photos: string;
     send: string;
@@ -104,6 +98,8 @@ interface Strings {
     extras: string;
     alt: (n: number) => string;
     remove: (n: number) => string;
+    side: (n: number) => string;
+    optional: string;
   };
   setup: { title: string; body: string; hint: string };
   /**
@@ -163,28 +159,22 @@ const ar: Strings = {
     planogram: "شوف البلانوغرام",
     planogramHint: "أشكال الاستاندات والأصناف اللي عليها",
     size: "المقاس",
-    question: "هل تم إدخال الاستاند للسوق؟",
-    answerYes: "نعم، دخل السوق",
-    answerNo: "لا، ما دخل",
-    answerOther: "دخل سوق آخر",
+    question: "هل البلانوغرام مطبّق؟",
+    answerYes: "نعم، مطبّق",
+    answerNo: "لا، مو مطبّق",
     posmQuestion: "هل تم تركيب مواد دعائية مخصصة؟",
-    photoLabel: "صورة الاستاند",
-    entryDate: "تاريخ الدخول",
+    photoLabel: "صور الاستاند (جهة لكل صورة)",
+    entryDate: "تاريخ التطبيق",
     date: "التاريخ",
     reasonQuestion: "وش السبب؟",
-    reasonDetail: "اكتب السبب",
-    reasonPlaceholder: "وضّح وش صار",
-    staysOpen: "السوق يبقى في قائمتك، وترجع تسجّل فيه لما يدخل الاستاند.",
-    altStore: "اسم السوق الفعلي",
-    altStorePlaceholder: "اكتب اسم السوق اللي دخله الاستاند",
+    staysOpen: "السوق يبقى في قائمتك، وترجع تسجّل فيه لما يتطبّق البلانوغرام.",
     review: "مراجعة وإرسال",
     confirmTitle: "تأكيد المعلومات",
     confirmHint: "راجعها قبل الإرسال.",
     store: "السوق",
     brands: "البراندات",
-    entered: "دخل الاستاند",
+    entered: "البلانوغرام مطبّق",
     reason: "السبب",
-    actualStore: "السوق الفعلي",
     customPosm: "مواد دعائية مخصصة",
     photos: "الصور",
     send: "تأكيد وإرسال",
@@ -204,9 +194,11 @@ const ar: Strings = {
     max: "أقصى عدد صور",
     needOne: "مطلوب صورة واحدة على الأقل",
     needMany: (n) => `مطلوب ${n} صور على الأقل`,
-    extras: "تقدر تضيف صور إضافية للجهة الأخرى — اختياري.",
+    extras: "صورة الجهة الثانية اختيارية.",
     alt: (n) => `صورة ${n}`,
     remove: (n) => `حذف الصورة ${n}`,
+    side: (n) => (n === 1 ? "الجهة الأولى" : "الجهة الثانية"),
+    optional: "اختياري",
   },
   api: {
     unauthorised: "غير مصرّح",
@@ -263,28 +255,22 @@ const en: Strings = {
     planogram: "View the planogram",
     planogramHint: "The stands and the SKUs on them",
     size: "Size",
-    question: "Did the stand go into the store?",
-    answerYes: "Yes, it went in",
-    answerNo: "No, it did not",
-    answerOther: "It went into another store",
+    question: "Is the planogram applied?",
+    answerYes: "Yes, it is applied",
+    answerNo: "No, it is not",
     posmQuestion: "Was custom POSM fitted?",
-    photoLabel: "Photo of the stand",
-    entryDate: "Date it went in",
+    photoLabel: "Stand photos (one per side)",
+    entryDate: "Date applied",
     date: "Date",
     reasonQuestion: "Why not?",
-    reasonDetail: "Say why",
-    reasonPlaceholder: "Explain what happened",
-    staysOpen: "The store stays on your list, and you can report again once the stand goes in.",
-    altStore: "Actual store name",
-    altStorePlaceholder: "Name the store the stand went into",
+    staysOpen: "The store stays on your list, and you can report again once the planogram is applied.",
     review: "Review and send",
     confirmTitle: "Confirm the details",
     confirmHint: "Check them before sending.",
     store: "Store",
     brands: "Brands",
-    entered: "Stand went in",
+    entered: "Planogram applied",
     reason: "Reason",
-    actualStore: "Actual store",
     customPosm: "Custom POSM",
     photos: "Photos",
     send: "Confirm and send",
@@ -304,9 +290,11 @@ const en: Strings = {
     max: "Maximum photos",
     needOne: "At least one photo is required",
     needMany: (n) => `At least ${n} photos are required`,
-    extras: "You can add more photos from other angles — optional.",
+    extras: "The second side's photo is optional.",
     alt: (n) => `Photo ${n}`,
     remove: (n) => `Remove photo ${n}`,
+    side: (n) => (n === 1 ? "Side 1" : "Side 2"),
+    optional: "optional",
   },
   api: {
     unauthorised: "Not authorised",

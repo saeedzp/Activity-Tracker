@@ -1,9 +1,15 @@
 /**
  * How the month's photos are laid out for download.
  *
- * The tree is campaign -> region -> city -> store, so the file name itself
- * needs to carry only the store: everything else is already the path it sits
- * in.
+ * The tree is region -> city -> campaign, and each file is named for the store,
+ * the stand size and the side it shows: everything else is already the path it
+ * sits in. Region comes first because the feedback is read one city at a time,
+ * and a region is the folder that holds its cities.
+ *
+ * The region folder is the plain region. Mars splits the West into three units
+ * (Jed, Mak, Mad), and their export keeps that, but a folder per unit would
+ * scatter one region's cities across three folders — so here every unit folds
+ * back into "West", with Jeddah, Makkah and Madinah side by side inside it.
  *
  * The whole tree is English, which is the rule for anything that leaves the
  * app. Region, city and store arrive from the route file already English, the
@@ -24,6 +30,10 @@ export interface ExportPhoto {
   region: string | null;
   city: string | null;
   storeName: string | null;
+  /** The stand size reported, e.g. 2x2 or GE. */
+  displayType?: string | null;
+  /** Side of the stand, 1 or 2. Null on photos from before the two sides. */
+  position?: number | null;
 }
 
 export interface ExportFile {
@@ -36,6 +46,12 @@ export interface ExportFile {
 export interface RegionBundle {
   region: string;
   files: ExportFile[];
+}
+
+/** Mars's western units, all filed under the one West folder. */
+export function folderRegion(region: string | null | undefined): string | null {
+  if (region == null) return null;
+  return /^\s*west\b/i.test(region) ? "West" : region;
 }
 
 /** English too, so a missing value does not put Arabic into an English tree. */
@@ -58,36 +74,47 @@ export function segment(value: string | null | undefined, fallback: string): str
 }
 
 /**
- * Group the month's photos into one bundle per region, each file named for its
- * store.
+ * Group the month's photos into one bundle per region.
  *
- * Two photos of the same store in the same campaign would collide, so the
- * second onward are numbered. The order is fixed rather than incidental: the
- * same month exported twice produces the same names, so a re-download does not
- * look like a different set of photos.
+ * A file is `<store> - <size>-<side>.jpg`. A store reported more than once for
+ * the same campaign and size (a "no" first, then the "yes" once applied) would
+ * collide, so a repeat takes ` (2)`, ` (3)` and is never lost. The order is
+ * fixed rather than incidental: the same month exported twice produces the
+ * same names, so a re-download does not look like a different set of photos.
  */
 export function planExport(photos: ExportPhoto[]): RegionBundle[] {
   const sorted = [...photos].sort(
     (a, b) =>
-      (a.activityName ?? "").localeCompare(b.activityName ?? "", "en") ||
-      (a.region ?? "").localeCompare(b.region ?? "", "en") ||
+      (folderRegion(a.region) ?? "").localeCompare(folderRegion(b.region) ?? "", "en") ||
       (a.city ?? "").localeCompare(b.city ?? "", "en") ||
+      (a.activityName ?? "").localeCompare(b.activityName ?? "", "en") ||
       (a.storeName ?? "").localeCompare(b.storeName ?? "", "en") ||
+      (a.displayType ?? "").localeCompare(b.displayType ?? "", "en") ||
+      (a.position ?? 9) - (b.position ?? 9) ||
       a.key.localeCompare(b.key),
   );
 
   const bundles = new Map<string, ExportFile[]>();
   const taken = new Set<string>();
+  /** Photos without a side are numbered in order, per store and size. */
+  const unsided = new Map<string, number>();
 
   for (const photo of sorted) {
-    const activity = segment(photo.activityName, NO_CAMPAIGN);
-    const region = segment(photo.region, UNKNOWN);
+    const region = segment(folderRegion(photo.region), UNKNOWN);
     const city = segment(photo.city, UNKNOWN);
+    const activity = segment(photo.activityName, NO_CAMPAIGN);
     const store = segment(photo.storeName, UNKNOWN);
+    const size = photo.displayType ? ` - ${segment(photo.displayType, UNKNOWN)}` : "";
 
-    const folder = `${activity}/${region}/${city}`;
-    let path = `${folder}/${store}.jpg`;
-    for (let n = 2; taken.has(path); n++) path = `${folder}/${store}-${n}.jpg`;
+    const folder = `${region}/${city}/${activity}`;
+    const stem = `${folder}/${store}${size}`;
+    let side = photo.position;
+    if (side == null) {
+      side = (unsided.get(stem) ?? 0) + 1;
+      unsided.set(stem, side);
+    }
+    let path = `${stem}-${side}.jpg`;
+    for (let n = 2; taken.has(path); n++) path = `${stem}-${side} (${n}).jpg`;
     taken.add(path);
 
     const files = bundles.get(region);

@@ -11,8 +11,8 @@
  * number we can work out in advance rather than a surprise.
  */
 
-/** Enough for the stand plus a couple of angles; more is not evidence. */
-export const MAX_PHOTOS = 4;
+/** One photo for each side of the stand: the first is required, the second optional. */
+export const MAX_PHOTOS = 2;
 
 /**
  * A 1600px JPEG at quality 0.85 lands around 400 KB, so this is generous

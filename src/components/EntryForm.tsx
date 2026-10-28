@@ -6,7 +6,7 @@ import {
   asksCustomPosm,
   DISPLAY_TYPES,
   displayTypeText,
-  reasonCodesFor,
+  PLANOGRAM_REASONS,
   reasonText,
   type Status,
 } from "@/lib/domain";
@@ -33,13 +33,13 @@ export interface PlanogramOption {
 
 /**
  * The one question the whole entry turns on, and the status each answer means.
- * Asking "did it go in?" once — rather than asking about entry and then about
- * implementation — matches how the job is actually done.
+ * The store comes from the employee's own route and the stand is already in
+ * it — whoever received one is the one reporting — so what is left to ask is
+ * whether the planogram on it is applied.
  */
 const ANSWERS = [
   { key: "yes", label: "answerYes", status: "Implemented" },
   { key: "no", label: "answerNo", status: "Not Implemented" },
-  { key: "other", label: "answerOther", status: "Implemented in another store" },
 ] as const;
 
 type AnswerKey = (typeof ANSWERS)[number]["key"];
@@ -65,8 +65,6 @@ export function EntryForm({
   const [displayType, setDisplayType] = useState("");
   const [answer, setAnswer] = useState<AnswerKey | "">("");
   const [reasonCode, setReasonCode] = useState("");
-  const [otherReason, setOtherReason] = useState("");
-  const [altStoreName, setAltStoreName] = useState("");
   const [entryDate, setEntryDate] = useState("");
   const [customPosm, setCustomPosm] = useState<boolean | null>(null);
   const [photos, setPhotos] = useState<PreparedPhoto[]>([]);
@@ -82,19 +80,17 @@ export function EntryForm({
   const status = (ANSWERS.find((a) => a.key === answer)?.status ?? "") as Status | "";
   const wentIn = answer === "yes";
   const didNot = answer === "no";
-  const elsewhere = answer === "other";
-  const needsOtherText = didNot && reasonCode === "Other";
-  // Only worth asking once the stand is actually in the store.
+  // Only worth asking once the planogram is up.
   const needsPosmAnswer = wentIn && asksCustomPosm(displayType);
 
   const ready =
     activityId !== "" &&
     displayType !== "" &&
     answer !== "" &&
-    (!wentIn || photos.length >= 1) &&
+    // Side one is owed on either answer: a yes shows it applied, a no shows
+    // what is missing.
+    photos.length >= 1 &&
     (!didNot || reasonCode !== "") &&
-    (!needsOtherText || otherReason.trim() !== "") &&
-    (!elsewhere || altStoreName.trim() !== "") &&
     (!needsPosmAnswer || customPosm !== null);
 
   function chooseDisplayType(type: string) {
@@ -105,14 +101,7 @@ export function EntryForm({
   function chooseAnswer(key: AnswerKey) {
     setAnswer(key);
     setReasonCode("");
-    setOtherReason("");
-    setAltStoreName("");
-    // Photos only belong to an answer that claims the stand is there.
-    if (key !== "yes") {
-      setPhotos([]);
-      setCustomPosm(null);
-    }
-    if (key !== "no" && !entryDate) setEntryDate(todayIso());
+    if (key !== "yes") setCustomPosm(null);
     if (key === "yes" && !entryDate) setEntryDate(todayIso());
   }
 
@@ -170,11 +159,9 @@ export function EntryForm({
           display_type: displayType,
           entered: wentIn,
           entry_date: wentIn ? entryDate || null : null,
-          implementation_date: wentIn || elsewhere ? entryDate || null : null,
+          implementation_date: wentIn ? entryDate || null : null,
           status,
           reason_code: didNot ? reasonCode : null,
-          alt_store_name: elsewhere ? altStoreName.trim() : null,
-          note: needsOtherText ? otherReason.trim() : null,
           custom_posm: needsPosmAnswer ? customPosm : null,
           photos: keys,
         }),
@@ -200,8 +187,6 @@ export function EntryForm({
     setDisplayType("");
     setAnswer("");
     setReasonCode("");
-    setOtherReason("");
-    setAltStoreName("");
     setEntryDate("");
     setPhotos([]);
     setUploaded(0);
@@ -256,23 +241,21 @@ export function EntryForm({
             value={answer ? s[ANSWERS.find((a) => a.key === answer)!.label] : "—"}
           />
           {didNot && <Row label={s.reason} value={reasonText(lang, reasonCode)} />}
-          {needsOtherText && <Row label={s.reasonDetail} value={otherReason.trim()} />}
-          {elsewhere && <Row label={s.actualStore} value={altStoreName.trim()} />}
-          {!didNot && <Row label={s.date} value={formatDate(lang, entryDate)} />}
+          {wentIn && <Row label={s.date} value={formatDate(lang, entryDate)} />}
           {needsPosmAnswer && (
             <Row label={s.customPosm} value={customPosm ? t(lang).common.yes : t(lang).common.no} />
           )}
-          {wentIn && <Row label={s.photos} value={`${photos.length}`} />}
+          <Row label={s.photos} value={`${photos.length}`} />
         </dl>
 
-        {wentIn && photos.length > 0 && (
-          <div className="mt-3 grid grid-cols-3 gap-2">
+        {photos.length > 0 && (
+          <div className="mt-3 grid grid-cols-2 gap-2">
             {photos.map((photo, index) => (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 key={index}
                 src={photo.dataUrl}
-                alt={t(lang).photos.alt(index + 1)}
+                alt={t(lang).photos.side(index + 1)}
                 className="aspect-square w-full rounded-lg border border-[var(--line)] object-cover"
               />
             ))}
@@ -417,7 +400,7 @@ export function EntryForm({
                 : "border-[var(--line)] bg-white"
             }`}
           >
-            {a.label}
+            {s[a.label]}
           </button>
         ))}
       </div>
@@ -452,10 +435,15 @@ export function EntryForm({
         </>
       )}
 
-      {wentIn && (
+      {answer !== "" && (
         <>
           <Label>{s.photoLabel}</Label>
           <PhotoPicker photos={photos} onChange={setPhotos} requiredCount={1} lang={lang} />
+        </>
+      )}
+
+      {wentIn && (
+        <>
           <Label>{s.entryDate}</Label>
           <input
             type="date"
@@ -473,7 +461,7 @@ export function EntryForm({
         <>
           <Label>{s.reasonQuestion}</Label>
           <div className="flex flex-wrap gap-2">
-            {reasonCodesFor("Not Implemented").map((code) => (
+            {PLANOGRAM_REASONS.map((code) => (
               <button
                 key={code}
                 type="button"
@@ -489,41 +477,9 @@ export function EntryForm({
             ))}
           </div>
 
-          {needsOtherText && (
-            <>
-              <Label>{s.reasonDetail}</Label>
-              <textarea
-                value={otherReason}
-                onChange={(e) => setOtherReason(e.target.value)}
-                placeholder={s.reasonPlaceholder}
-                className="min-h-[74px] w-full rounded-xl border border-[var(--line)] bg-white p-3"
-              />
-            </>
-          )}
-
           <p className="mt-3 rounded-lg bg-[var(--amber-soft)] px-3 py-2 text-xs text-[var(--amber)]">
             {s.staysOpen}
           </p>
-        </>
-      )}
-
-      {elsewhere && (
-        <>
-          <Label>{s.altStore}</Label>
-          <input
-            type="text"
-            value={altStoreName}
-            onChange={(e) => setAltStoreName(e.target.value)}
-            placeholder={s.altStorePlaceholder}
-            className="w-full rounded-xl border border-[var(--line)] bg-white p-3"
-          />
-          <Label>{s.date}</Label>
-          <input
-            type="date"
-            value={entryDate}
-            onChange={(e) => setEntryDate(e.target.value)}
-            className="w-full rounded-xl border border-[var(--line)] bg-white p-3"
-          />
         </>
       )}
 

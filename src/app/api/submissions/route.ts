@@ -5,11 +5,9 @@ import { monthOf } from "@/lib/dates";
 import { isPhotoKey, MAX_PHOTOS } from "@/lib/photo-key";
 import {
   asksCustomPosm,
-  STATUSES,
   isClosing,
-  reasonCodesFor,
-  requiresAltStoreName,
-  requiresReasonCode,
+  isEntryStatus,
+  isPlanogramReason,
   type Status,
 } from "@/lib/domain";
 import { currentLang } from "@/lib/lang-server";
@@ -35,34 +33,29 @@ export async function POST(request: Request) {
   const displayType = String(body?.display_type ?? "").trim();
   const status = String(body?.status ?? "").trim() as Status;
   const reasonCode = body?.reason_code ? String(body.reason_code).trim() : null;
-  const altStoreName = body?.alt_store_name ? String(body.alt_store_name).trim() : null;
 
   if (!storeId || !activityId || !displayType) {
     return NextResponse.json({ error: m.missingFields }, { status: 400 });
   }
-  if (!(STATUSES as readonly string[]).includes(status)) {
+  // Only the two answers the question offers. The older statuses stay valid in
+  // the table for the rows recorded under them, but nothing new is filed so.
+  if (!isEntryStatus(status)) {
     return NextResponse.json({ error: m.unknownStatus }, { status: 400 });
   }
-  if (reasonCode && !reasonCodesFor(status).includes(reasonCode)) {
+  // A yes carries no reason; a no always says which of the two it is.
+  if (status === "Implemented" && reasonCode) {
     return NextResponse.json({ error: m.wrongReasonForStatus }, { status: 400 });
   }
-  // Not Implemented is the one status that always owes an explanation.
-  if (status === "Not Implemented" && !reasonCode) {
-    return NextResponse.json({ error: m.chooseReason }, { status: 400 });
-  }
-  if (requiresAltStoreName(status) && !altStoreName) {
-    return NextResponse.json({ error: m.nameAltStore }, { status: 400 });
-  }
-  // "Other" names no cause on its own, so the explanation is what makes the row
-  // worth anything to whoever reads the export.
-  const note = body?.note ? String(body.note).trim() : null;
-  if (reasonCode === "Other" && !note) {
-    return NextResponse.json({ error: m.writeReason }, { status: 400 });
+  if (status === "Not Implemented") {
+    if (!reasonCode) return NextResponse.json({ error: m.chooseReason }, { status: 400 });
+    if (!isPlanogramReason(reasonCode)) {
+      return NextResponse.json({ error: m.wrongReasonForStatus }, { status: 400 });
+    }
   }
 
-  // Photos are uploaded first and claimed here by key. Checked rather than
-  // trusted: a key is a path, and these are rendered back to whoever reads the
-  // history.
+  // Photos are uploaded first and claimed here by key, in side order: the
+  // first is side one. Checked rather than trusted: a key is a path, and these
+  // are rendered back to whoever reads the history.
   const keys = Array.isArray(body?.photos) ? body.photos : [];
   if (keys.length > MAX_PHOTOS) {
     return NextResponse.json({ error: m.maxPhotos(MAX_PHOTOS) }, { status: 400 });
@@ -70,10 +63,10 @@ export async function POST(request: Request) {
   if (!keys.every(isPhotoKey)) {
     return NextResponse.json({ error: m.badPhoto }, { status: 400 });
   }
-  // The one status that claims something happened is the one that owes proof,
-  // and the rule belongs here rather than only in the form: the form is a
-  // convenience, this route is the record.
-  if (status === "Implemented" && keys.length === 0) {
+  // Both answers owe a photo now: a yes shows the planogram applied, a no
+  // shows what is missing. The rule lives here, not only in the form: the form
+  // is a convenience, this route is the record.
+  if (keys.length === 0) {
     return NextResponse.json({ error: m.needPhoto }, { status: 400 });
   }
 
@@ -122,14 +115,15 @@ export async function POST(request: Request) {
       entry_date: body?.entry_date || null,
       implementation_date: body?.implementation_date || null,
       status,
-      // The status decides whether a reason code belongs here at all.
-      reason_code: status === "Implemented in another store" ? null : reasonCode,
-      alt_store_name: requiresAltStoreName(status) ? altStoreName : null,
-      note,
-      // Only the permanent fixtures are asked, so anything else stores null
-      // rather than a false that would read as "no POSM fitted".
+      reason_code: status === "Not Implemented" ? reasonCode : null,
+      alt_store_name: null,
+      note: null,
+      // Only the permanent fixtures are asked, and only on a yes, so anything
+      // else stores null rather than a false that would read as "no POSM fitted".
       custom_posm:
-        asksCustomPosm(displayType) && typeof body?.custom_posm === "boolean"
+        status === "Implemented" &&
+        asksCustomPosm(displayType) &&
+        typeof body?.custom_posm === "boolean"
           ? body.custom_posm
           : null,
       // submitted_at is left to the database default: the phone clock is not trusted.
@@ -148,7 +142,13 @@ export async function POST(request: Request) {
     // refusing a submission the employee has already made.
     const { error: photoError } = await db
       .from("photos")
-      .insert(keys.map((r2_key: string) => ({ submission_id: data.id, r2_key })));
+      .insert(
+        keys.map((r2_key: string, i: number) => ({
+          submission_id: data.id,
+          r2_key,
+          position: i + 1,
+        })),
+      );
     if (photoError) console.error("photo rows failed:", photoError.message);
   }
 

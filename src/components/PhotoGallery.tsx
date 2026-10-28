@@ -99,7 +99,7 @@ export function PhotoGallery({
                 href={`/api/photos/${file.key}`}
                 target="_blank"
                 rel="noreferrer"
-                // The path is the caption: campaign, region, city and store.
+                // The path is the caption: region, city, campaign and store.
                 title={file.path}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -116,9 +116,10 @@ export function PhotoGallery({
       ))}
 
       <p className="text-xs text-[var(--mute)]">
-        Inside the file: activity, then region, then city, and the photo named
-        after the store. Unzip every region into the same folder and they merge
-        into one tree. About {formatBytesEn(400_000)} per photo.
+        Inside the file: region, then city, then activity, and each photo named
+        store - size - side (1 or 2). The three West units share one West
+        folder. Unzip every region into the same folder and they merge into one
+        tree. About {formatBytesEn(400_000)} per photo.
       </p>
     </div>
   );

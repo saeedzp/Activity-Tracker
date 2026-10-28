@@ -16,6 +16,8 @@ export const REASON_CODES_BY_STATUS = {
   Implemented: ["Low Stock", "POSM not received", "Without POSM"],
   "Implemented in another store": [],
   "Not Implemented": [
+    "Low Stock",
+    "No Planogram",
     "Account Restriction",
     "Contract Issue",
     "OOS",
@@ -31,6 +33,25 @@ export const REASON_CODES_BY_STATUS = {
     "Other",
   ],
 } as const satisfies Record<Status, readonly string[]>;
+
+/**
+ * What a new entry may say. The question is now "is the planogram applied?",
+ * asked of a store from the employee's own route, so there is no "another
+ * store" answer and no reason on a yes. The longer lists above stay so that
+ * rows recorded under the old question still validate and still read in
+ * Arabic: submissions is append-only, and the history must resolve them.
+ */
+export const ENTRY_STATUSES = ["Implemented", "Not Implemented"] as const satisfies readonly Status[];
+
+export const PLANOGRAM_REASONS = ["Low Stock", "No Planogram"] as const;
+
+export function isEntryStatus(status: string): status is (typeof ENTRY_STATUSES)[number] {
+  return (ENTRY_STATUSES as readonly string[]).includes(status);
+}
+
+export function isPlanogramReason(code: string): boolean {
+  return (PLANOGRAM_REASONS as readonly string[]).includes(code);
+}
 
 export type ReasonCode =
   (typeof REASON_CODES_BY_STATUS)[Status][number] extends never
@@ -163,7 +184,8 @@ export const STATUS_AR: Record<Status, string> = {
 };
 
 export const REASON_AR: Record<string, string> = {
-  "Low Stock": "نقص مخزون",
+  "Low Stock": "ستوك ناقص",
+  "No Planogram": "ما فيه بلانوغرام بعد",
   "POSM not received": "لم تصل مواد الدعاية",
   "Without POSM": "بدون مواد دعاية",
   "Account Restriction": "قيود من الأكاونت",

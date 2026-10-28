@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   CLOSING_STATUSES,
   DISPLAY_TYPES,
+  ENTRY_STATUSES,
   isClosing,
+  isEntryStatus,
+  isPlanogramReason,
+  PLANOGRAM_REASONS,
   reasonAr,
   reasonCodesFor,
   requiresAltStoreName,
@@ -29,8 +33,12 @@ describe("reason codes", () => {
     ]);
   });
 
-  it("gives Not Implemented thirteen codes", () => {
-    expect(reasonCodesFor("Not Implemented")).toHaveLength(13);
+  it("still accepts the thirteen old codes on Not Implemented, plus the two new ones", () => {
+    // Append-only: rows from the old question must still validate.
+    expect(reasonCodesFor("Not Implemented")).toHaveLength(15);
+    for (const code of PLANOGRAM_REASONS) {
+      expect(reasonCodesFor("Not Implemented")).toContain(code);
+    }
   });
 
   it("gives Implemented in another store none, but demands the store name", () => {
@@ -38,6 +46,20 @@ describe("reason codes", () => {
     expect(requiresReasonCode("Implemented in another store")).toBe(false);
     expect(requiresAltStoreName("Implemented in another store")).toBe(true);
     expect(requiresAltStoreName("Implemented")).toBe(false);
+  });
+});
+
+describe("the planogram question", () => {
+  it("files new entries as yes or no only", () => {
+    expect(ENTRY_STATUSES).toEqual(["Implemented", "Not Implemented"]);
+    expect(isEntryStatus("Implemented in another store")).toBe(false);
+  });
+
+  it("offers exactly two reasons for a no", () => {
+    expect(PLANOGRAM_REASONS).toEqual(["Low Stock", "No Planogram"]);
+    expect(isPlanogramReason("OOS")).toBe(false);
+    expect(reasonAr("No Planogram")).toBe("ما فيه بلانوغرام بعد");
+    expect(reasonAr("Low Stock")).toBe("ستوك ناقص");
   });
 });
 

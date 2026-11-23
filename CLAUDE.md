@@ -410,3 +410,7 @@ Workers ولا تحوّل المشروع إليه.
   المرفوع هو `seed/stores.example.csv`.
 - قبل أي push: `npm run build` و `npm test` بدون أخطاء.
 - رسائل الـ commit بصيغة Conventional Commits.
+
+
+<!-- project + Saeed context -->
+@AGENTS.md
